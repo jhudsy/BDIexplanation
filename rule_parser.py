@@ -8,14 +8,15 @@ NUMBER: /[0-9_]\w*/
 COMMENT: /#[^\n]*/
 
 ruleset: (rule)* (event)*
-rule: body "->" effects ";"
+rule: body "->" effects
 body: _beliefs ["," _goals ]
 _beliefs: [belief ("," belief)*]
 belief: STRING
 _goals: "!"goal ("," goal)*
 goal: STRING
 effects: [_effect ("," _effect)*]
-_effect: addbelief | rembelief | addgoal | remgoal
+_effect: addbelief | rembelief | addgoal | remgoal | action
+action: "."STRING
 addbelief:  "+"belief
 rembelief: "-"belief
 addgoal:  "+!"goal
