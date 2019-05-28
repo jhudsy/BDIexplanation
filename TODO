@@ -1,0 +1,7 @@
+#add "why did you do this action"
+#create robot with mental model divergence and have them understand
+#look at trace of human vs robot discussion and see if good dialogue
+#need semantics of human mental model
+#execute only 1 rule at a time - NO. DONE, at each time step a single rule is chosen for execution, TODO: no belief only rules should exist (as these might be triggered at every time step); any goal achieving rule should remove goal from KB. 
+#add actions to implementation - NO. DONE
+#semantics for humanPlayer: missing extra or modified bits of trace or KB

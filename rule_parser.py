@@ -9,7 +9,7 @@ COMMENT: /#[^\n]*/
 
 ruleset: (rule)* (event)*
 rule: body "->" effects
-body: _beliefs ["," _goals ]
+body: _beliefs [ _goals ]
 _beliefs: [belief ("," belief)*]
 belief: STRING
 _goals: "!"goal ("," goal)*
@@ -57,7 +57,10 @@ def readfile(filename):
       effects.add(RemoveBelief(a.children[0].children[0].value))
     for a in r.find_data("remgoal"):
       effects.add(RemoveGoal(a.children[0].children[0].value))
+    for a  in r.find_data("action"):  
+      effects.add(ExecuteAction(a.children[0].value))
     ruleset.add(Rule(beliefs,goals,effects))
+
 
   for e in o.find_data("event"):
       time=int(e.children[0])

@@ -6,6 +6,18 @@ class RuleEffect:
       pass
 ##########################################
 
+class ExecuteAction(RuleEffect):
+  def __init__(self,action):
+    super().__init__()
+    self.action=action
+
+  def apply(self,kb):
+    pass
+
+  def __repr__(self):
+    return "."+self.action
+##########################################
+
 class AddBelief(RuleEffect):
     def __init__(self,belief):
       super().__init__()
@@ -82,7 +94,7 @@ class KB:
         self.beliefs=set()
         self.goals=set()
         self.rules=set()
-        self.trace={} #captures the beliefs,goals and rules applied at any point in time
+        self.trace=[] #captures the beliefs,goals and rules applied at any point in time
         self.time=0
 
     def tick(self):
@@ -91,10 +103,17 @@ class KB:
         if len(rules)!=0:
             rule=rules.pop()
         else:
-            rule=None
+            rule=Rule(set(),set(),set())
+
+        #add action to the trace based on the selected rule. TODO: move to apply
+        actions=set()
+        for e in rule.effects:
+          if e.__class__==ExecuteAction:
+            actions.add(e.action)
 
         #record the trace, which takes the form of beliefs, goals and applied rule
-        self.trace[self.time]=([set(self.beliefs),set(self.goals),rule])
+        self.trace.append([set(self.beliefs),set(self.goals),actions,rule])
+
 
         self.execute(rule)
         self.goals=self.goals-self.beliefs #remove goals that were achieved
