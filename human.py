@@ -12,8 +12,8 @@ class ExecuteAction(RuleEffect):
     self.action=action
 
   def apply(self,kb,public_trace):
-      print ("system performs "+self.action);
-      s = "s:"+self.action
+      print ("human expects "+self.action)
+      s = "h:"+self.action
       public_trace.append(s)
 
   def __repr__(self):
@@ -91,16 +91,28 @@ class Rule:
 
 ##########################################
 
-class KB:
+#  The human is going to inspect a trace and see if he/she agrees with it.
+class HUMAN_KB:
     def __init__(self):
         self.beliefs=set()
         self.goals=set()
         self.rules=set()
-        self.trace=[] #captures the beliefs,goals and rules applied at any point in time
+        self.trace=[]
+        #c self.trace=self.modify(trace) #captures the beliefs,goals and rules applied at any point in time
         self.time=0
 
-    def tick(self,public_trace):
-        """Does a clock tick in the KB. NOT THE ENVIRONMENT!!!"""
+    # We take a robot trace and modify it by adding `perceptibles' (not yet implemented on robot side) and introducing a human error.
+    # def modify(self, trace):
+    #     model = []
+    #     for tick in trace:
+    #         tick.append(set()) # Facts perceptible at that time - this probably needs to be changed when we add perception.
+    #         tick.append(set()) # Facts the human perceived and the robot didn't
+    #         tick.append(set()) # Facts the robot perceived that weren't there.
+    #         model.append(tick)
+    
+    
+    def tick(self, public_trace):
+        """Does a clock tick in the Human represenation of the KB. NOT THE ENVIRONMENT!!!"""
         rules=self.find_applicable_rules()
         if len(rules)!=0:
             rule=rules.pop()
