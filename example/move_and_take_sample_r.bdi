@@ -1,0 +1,9 @@
+take_sample_message -> -take_sample_message,+!move_to_location,+!take_sample
+safe_terrain, at_start !move_to_location -> .move1,+at_waypoint,-at_start
+safe_terrain,at_waypoint !move_to_location -> .move2,+at_location,-at_waypoint
+at_location !take_sample -> -!take_sample,.drill
+1:+at_start
+2:+safe_terrain
+3:+take_sample_message
+5:-safe_terrain
+

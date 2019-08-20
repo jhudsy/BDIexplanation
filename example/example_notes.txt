@@ -1,0 +1,3 @@
+take_sample:  The robot is expected to drill a rock if given the goal to take a sample.  The human "sends" the goal, but the robot does not receive it.
+
+move_and_sample: The robot must move to take the same.  In doing so they observe that the terrain is dangerous where the human does not.
