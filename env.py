@@ -99,7 +99,7 @@ class KB:
         self.trace=[] #captures the beliefs,goals and rules applied at any point in time
         self.time=0
 
-    def tick(self,public_trace):
+    def tick(self,public_trace,public_actions):
         """Does a clock tick in the KB. NOT THE ENVIRONMENT!!!"""
         rules=self.find_applicable_rules()
         if len(rules)!=0:
@@ -112,6 +112,7 @@ class KB:
         for e in rule.effects:
           if e.__class__==ExecuteAction:
             actions.add(e.action)
+            public_actions.add(e.action)
 
         #record the trace, which takes the form of beliefs, goals and applied rule and time stamp
         self.trace.append([set(self.beliefs),set(self.goals),actions,rule,self.time])
@@ -149,4 +150,7 @@ class KB:
 
     def __repr__(self):
         return "Beliefs: "+str(self.beliefs)+" Goals: "+str(self.goals)
+        
+    def name(self):
+        return "robot"
   ##########################################

@@ -1,5 +1,6 @@
 from env import *
 from human import *
+from dialogue import *
 from rule_parser import readfile
 from rule_parser_human import readfile as h_readfile
 import sys
@@ -12,6 +13,7 @@ if __name__=="__main__":
     (rs,ev)=readfile(sys.argv[1])
     (hrs,hev)=h_readfile(sys.argv[2])
     public_trace = []
+    actions = set()
     for r in rs:
         kb.rules.add(r)
     for r in hrs:
@@ -25,8 +27,8 @@ if __name__=="__main__":
         if hev.get(i)!=None:
             for e in hev.get(i):
               e.apply(hmm,trace_point)
-        kb.tick(trace_point)
-        hmm.tick(trace_point)
+        kb.tick(trace_point,actions)
+        hmm.tick(trace_point,actions)
 #print(kb)
         public_trace.append(trace_point)
         #for t in kb.trace:
@@ -34,4 +36,13 @@ if __name__=="__main__":
         #for t in hmm.trace:
     #print(t)
     print(public_trace)
+    dialogue=Dialogue(hmm,kb,actions)
+    while (dialogue.can_continue):
+        print("\nDIALOGUE TURN:")
+        dialogue.move()
+        if (dialogue.is_closed()):
+            print("\nDIALOGUE CLOSED\n")
+            break
+    print(dialogue)
+
 
