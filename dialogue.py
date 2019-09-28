@@ -57,7 +57,12 @@ class WhyAction(Move):
             if (move.trace_point == self.trace_point - 1):
                 if (isinstance(move, AssertPi)):
                     if (self.action in move.get_rule().effects):
-                        self.closed=True
+                        self.closed = True
+                        break
+            if (isinstance(move, IDidnt)):
+                 if move.action == self.action:
+                    if (move.trace_point == self.trace_point):
+                        self.closed = True
                         break
                 
     def __repr__(self):
@@ -72,6 +77,19 @@ class IDid(Move):
         
     def __repr__(self):
         return str(self.player.name()) + ": I Did " + str(self.action) + " at " + str(self.trace_point)
+        
+class IDidnt(Move):
+    def __init__(self, turn, action, i, parent):
+        Move.__init__(self, parent, turn)
+        self.action = action
+        self.trace_point = i
+        self.closed = True
+        
+    def __repr__(self):
+        if (self.player.name() == "robot"):
+            return str(self.player.name()) + ": I Didn't " + str(self.action) + " at " + str(self.trace_point)
+        else:
+            return str(self.player.name()) + ": I Didn't expect " + str(self.action) + " at " + str(self.trace_point)
         
 class AssertPi(Move):
     def __init__(self, turn, pi, i, parent):
@@ -125,6 +143,22 @@ class WhyActionType(MoveType):
                     if (move.get_player() != turn):
                         move_list.append(WhyAction(turn, move.action, move.trace_point, node))
         return move_list
+        
+class IDidntType(MoveType):
+    def legal(self, store, turn, actions):
+        move_list = []
+        for node in store.node_list():
+            if (node.empty):
+                continue
+            move = node.get_move();
+            if (not move.is_closed()):
+                if (isinstance(move, WhyAction)):
+                    if (move.get_player() != turn):
+                        player_internal_trace_point = turn.trace[move.trace_point]
+                        actions = player_internal_trace_point[2]
+                        if (not (move.action in actions)):
+                            move_list.append(IDidnt(turn, move.action, move.trace_point, node))
+        return move_list
 
 class Dialogue:
     def __init__(self, human, robot, actions):
@@ -139,6 +173,7 @@ class Dialogue:
        self.move_list.append(WhyNotActionType())
        self.move_list.append(IDidActionType())
        self.move_list.append(WhyActionType())
+       self.move_list.append(IDidntType())
     
     def move(self):
         legal_moves = self.calculate_legal_moves();
