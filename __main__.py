@@ -2,7 +2,6 @@ from env import *
 from human import *
 from dialogue import *
 from rule_parser import readfile
-from rule_parser_human import readfile as h_readfile
 import sys
 
 
@@ -11,22 +10,24 @@ if __name__=="__main__":
     kb=KB()
     hmm=HUMAN_KB()
     (rs,ev)=readfile(sys.argv[1])
-    (hrs,hev)=h_readfile(sys.argv[2])
+    (hrs,hev)=readfile(sys.argv[2])
     public_trace = []
     actions = set()
     for r in rs:
-        kb.rules.add(r)
+        kb.rules.append(r)
     for r in hrs:
-        hmm.rules.add(r)
-    for i in range(0,100):
+        hmm.rules.append(r)
+    for i in range(0,10):
         trace_point = [];
         trace_point.append(i);
         if ev.get(i)!=None:
             for e in ev.get(i):
               e.apply(kb,trace_point)
+            kb.percieve(ev.get(i))
         if hev.get(i)!=None:
             for e in hev.get(i):
               e.apply(hmm,trace_point)
+            hmm.percieve(ev.get(i))
         kb.tick(trace_point,actions)
         hmm.tick(trace_point,actions)
 #print(kb)

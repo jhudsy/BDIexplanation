@@ -1,103 +1,24 @@
-
-##########################################
-class RuleEffect:
-    """The effects of a rule, subclassed by other classes below"""
-    def apply(self,kb):
-      pass
-##########################################
-
-class ExecuteAction(RuleEffect):
-  def __init__(self,action):
-    super().__init__()
-    self.action=action
-
-  def apply(self,kb,public_trace):
-      print ("system performs "+self.action);
-      s = "s:"+self.action
-      public_trace.append(s)
-
-  def __repr__(self):
-    return "."+self.action
-##########################################
-
-class AddBelief(RuleEffect):
-    def __init__(self,belief):
-      super().__init__()
-      self.belief=belief
-
-    def apply(self,kb,public_trace):
-      kb.add_belief(self.belief)
-
-    def __repr__(self):
-        return "+"+self.belief
-##########################################
-
-class RemoveBelief(RuleEffect):
-    def __init__(self,belief):
-      super().__init__()
-      self.belief=belief
-
-    def apply(self,kb,public_trace):
-      kb.remove_belief(self.belief)
-
-    def __repr__(self):
-      return "-"+self.belief
-##########################################
-class AddGoal(RuleEffect):
-    def __init__(self,goal):
-      super().__init__()
-      self.goal=goal
-
-
-    def apply(self,kb,public_trace):
-      kb.add_goal(self.goal)
-
-    def __repr__(self):
-      return "+!"+self.goal
-##########################################
-class RemoveGoal(RuleEffect):
-    def __init__(self,goal):
-      super().__init__()
-      self.goal=goal
-
-    def apply(self,kb,public_trace):
-      kb.remove_goal(self.goal)
-
-    def __repr__(self):
-      return "-!"+self.goal
-
-##########################################
-#######END RULE EFFECT CLASSES############
-##########################################
-
-
-
-class Rule:
-  def __init__(self,beliefs=set(),goals=set(),effects=set()):
-    self.beliefs=beliefs
-    self.goals=goals
-    self.effects=effects
-
-  def __repr__(self):
-      s=""
-      for b in self.beliefs:
-          s+=b+","
-      for g in self.goals:
-          s+="!"+g+","
-      s+=" -> "
-      for e in self.effects:
-          s+=str(e)+","
-      return s
-
-##########################################
+from rules import *
 
 class KB:
     def __init__(self):
         self.beliefs=set()
         self.goals=set()
-        self.rules=set()
+        self.rules=[]
         self.trace=[] #captures the beliefs,goals and rules applied at any point in time
         self.time=0
+        
+    def percieve(self, belief_changes):
+        add_beliefs = set();
+        removed_beliefs = set();
+        if belief_changes != None:
+            for e in belief_changes:
+                if (isinstance(e, AddBelief)):
+                    add_beliefs.add(e.belief)
+                if (isinstance(e, RemoveBelief)):
+                    removed_beliefs.add(e.belief)
+        self.trace.append([set(self.beliefs),set(self.goals),set(add_beliefs),set(removed_beliefs),set(),Rule(set(),set(),set()),self.time])
+        self.time += 1
 
     def tick(self,public_trace,public_actions):
         """Does a clock tick in the KB. NOT THE ENVIRONMENT!!!"""
@@ -106,16 +27,25 @@ class KB:
             rule=rules.pop()
         else:
             rule=Rule(set(),set(),set())
+            
+        self.trace.append([set(self.beliefs),set(self.goals),set(),set(),set(),rule,self.time])
+        self.time += 1
 
         #add action to the trace based on the selected rule. TODO: move to apply
         actions=set()
+        add_beliefs = set();
+        removed_beliefs = set();
         for e in rule.effects:
-          if e.__class__==ExecuteAction:
-            actions.add(e.action)
-            public_actions.add(e.action)
+            if e.__class__==ExecuteAction:
+                actions.add(e.action)
+                public_actions.add(e.action)
+            if (isinstance(e, AddBelief)):
+                add_beliefs.add(e.belief)
+            if (isinstance(e, RemoveBelief)):
+                removed_beliefs.add(e.belief)
 
         #record the trace, which takes the form of beliefs, goals and applied rule and time stamp
-        self.trace.append([set(self.beliefs),set(self.goals),actions,rule,self.time])
+        self.trace.append([set(self.beliefs),set(self.goals),set(add_beliefs),set(removed_beliefs),actions,Rule(set(),set(),set()),self.time])
 
 
         self.execute(rule,public_trace)
@@ -123,10 +53,10 @@ class KB:
         self.time+=1
 
     def find_applicable_rules(self):
-        app=set()
+        app=[]
         for r in self.rules:
             if r.beliefs <= self.beliefs and r.goals <= self.goals:
-                app.add(r)
+                app.append(r)
         return app
 
     def execute(self,rule,public_trace):

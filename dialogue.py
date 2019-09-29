@@ -1,6 +1,12 @@
 import random
 from dialogue_tree import *
+from rules import ExecuteAction
 
+# For ease of debugging
+action_start = 4
+action_end = 5
+
+# Specific moves
 class Move:
     def __init__(self, parent, player):
         self.closed = False
@@ -56,8 +62,14 @@ class WhyAction(Move):
             move = node.get_move()
             if (move.trace_point == self.trace_point - 1):
                 if (isinstance(move, AssertPi)):
-                    if (self.action in move.get_rule().effects):
-                        self.closed = True
+                    for effect in move.pi.effects:
+                        if (isinstance(effect, ExecuteAction)):
+                        # print (effect.action)
+                        # print (move.action)
+                            if effect.action == self.action:
+                                self.closed = True
+                                break
+                    if (self.closed):
                         break
             if (isinstance(move, IDidnt)):
                  if move.action == self.action:
@@ -97,7 +109,72 @@ class AssertPi(Move):
         self.pi = pi
         self.trace_point = i
         self.closed = False
+        
+    def check_closure(self, position, store):
+        for node in store.node_list():
+            move = node.get_move()
+            if (hasattr(move, 'trace_point')):
+                if (move.trace_point == self.trace_point):
+                    if (move.get_player() != self.get_player()):
+                        if (isinstance(move, AssertPi)):
+                            node_parent = move.parent
+                            move_parent = node_parent.get_move()
+                            if (move_parent == self):
+                                self.closed = True
+                                break
+                        if (isinstance(move, WhyPi)):
+                            self.closed = True
+                            break
+            else:
+                if (move.get_player() != self.get_player()):
+                    if (isinstance(move, NotInLibrary)):
+                        if move.pi == self.pi:
+                            self.closed = True
+                            break
+                    if (isinstance(move, Precedence)):
+                        node_parent = move.parent
+                        move_parent = node_parent.get_move()
+                        if (move_parent == self):
+                            self.closed = True
+                            break
+                        
+                        
+    def __repr__(self):
+        return str(self.player.name()) + ": Selected " + str(self.pi) + " at " + str(self.trace_point)
+        
+class NotInLibrary(Move):
+    def __init__(self, turn, pi, parent):
+        Move.__init__(self, parent, turn)
+        self.pi = pi
+        self.closed = True
+        
+    def __repr__(self):
+        return str(self.player.name()) + ": " + str(self.pi) + " is not in my plan library"
+        
+class Precedence(Move):
+    def __init__(self, turn, pi, parent):
+        Move.__init__(self, parent, turn)
+        self.pi = pi
+        self.closed = True
+        
+    def __repr__(self):
+        return str(self.player.name()) + ": " + str(self.pi) + " has precedence in my plan library"
+        
+class WhyBelief(Move):
+    def __init__(self, turn, belief, i, parent):
+        Move.__init__(self, parent, turn)
+        self.belief = belief
+        self.trace_point = i
+        self.closed = False
+        
+class WhyPi(Move):
+    def __init__(self, turn, pi, i, parent):
+        Move.__init__(self, turn, parent)
+        self.pi = pi
+        self.trace_point = i
+        self.closed = False
 
+# Types of move - there may be several of each sort that are legal at any one point
 class MoveType:
     
     def legal(self, store, turn, actions):
@@ -108,7 +185,7 @@ class WhyNotActionType(MoveType):
         move_list = []
         if (store.empty):
             for action in actions:
-                for i in range(3, 5):
+                for i in range(action_start, action_end):
                     move_list.append(WhyNotAction(turn, action, i, store))
         return move_list
         
@@ -123,7 +200,7 @@ class IDidActionType(MoveType):
                 if (isinstance(move, WhyNotAction)):
                     if (move.get_player() != turn):
                         player_internal_trace_point = turn.trace[move.trace_point]
-                        actions = player_internal_trace_point[2]
+                        actions = player_internal_trace_point[4]
                         if (move.action in actions):
                             move_list.append(IDid(turn, move.action, move.trace_point, node))
         return move_list
@@ -134,7 +211,7 @@ class WhyActionType(MoveType):
         for node in store.node_list():
             if (node.empty):
                 for action in actions:
-                    for i in range(3, 5):
+                    for i in range(action_start, action_end):
                         move_list.append(WhyAction(turn, action, i, store))
                 continue
             move = node.get_move()
@@ -155,10 +232,102 @@ class IDidntType(MoveType):
                 if (isinstance(move, WhyAction)):
                     if (move.get_player() != turn):
                         player_internal_trace_point = turn.trace[move.trace_point]
-                        actions = player_internal_trace_point[2]
+                        actions = player_internal_trace_point[4]
+                        #print(player_internal_trace_point)
+                        #print(actions)
+                        #print(move.action)
                         if (not (move.action in actions)):
                             move_list.append(IDidnt(turn, move.action, move.trace_point, node))
         return move_list
+
+class AssertPiType(MoveType):
+    def legal(self, store, turn, actions):
+        move_list = []
+        for node in store.node_list():
+            if (node.empty):
+                continue
+            move = node.get_move()
+            if (not move.is_closed()):
+                if (move.get_player() != turn):
+                    if (isinstance(move, WhyAction)):
+                        # print(move)
+                        player_internal_trace_point = turn.trace[move.trace_point - 1]
+                        rule = player_internal_trace_point[5]
+                        if (rule.effects == set()):
+                            break;
+                        for effect in rule.effects:
+                            # print(effect)
+                            if (isinstance(effect, ExecuteAction)):
+                                # print (effect.action)
+                                # print (move.action)
+                                if effect.action == move.action:
+                                    move_list.append(AssertPi(turn, rule, move.trace_point - 1,node))
+                                    break;
+                    if (isinstance(move, WhyBelief)):
+                        player_internal_trace_point = turn.trace[move.trace_point - 1]
+                        rule = player_internal_trace_point[5]
+                        if (rule.effects == set()):
+                            break;
+                        if (move.belief in rule.effects):
+                            move_list.append(AssertPi(turn, rule, move.trace_point - 1,node))
+                    if (isinstance(move, AssertPi)):
+                        player_internal_trace_point = turn.trace[move.trace_point]
+                        rule = player_internal_trace_point[5]
+                        if (rule.effects == set()):
+                            break;
+                        if (rule != move.pi):
+                            potential_new_move = AssertPi(turn, rule, move.trace_point,node)
+                            legal_move = True
+                            for node1 in store.node_list():
+                                if (node1.empty):
+                                    continue
+                                move1 = node.get_move();
+                                if (move1 == potential_new_move):
+                                    legal_move = False
+                                    break
+                            if (legal_move):
+                                move_list.append(potential_new_move)
+        return move_list
+        
+class NotInLibraryType(MoveType):
+    def legal(self, store, turn, actions):
+        move_list = []
+        for node in store.node_list():
+            if (node.empty):
+                continue
+            move = node.get_move()
+            if (not move.is_closed()):
+                if (move.get_player() != turn):
+                    if (isinstance(move, AssertPi)):
+                        if (not move.pi.in_rule_list(turn.rules)):
+                            move_list.append(NotInLibrary(turn, move.pi, node))
+        return move_list
+        
+class PrecedenceType(MoveType):
+    def legal(self, store, turn, actions):
+        move_list = []
+        for node in store.node_list():
+            if (node.empty):
+                continue
+            move = node.get_move()
+            if (not move.is_closed()):
+                if (move.get_player() != turn):
+                    if (isinstance(move, AssertPi)):
+                        # print("found assert pi")
+                        # print(move.pi)
+                        # print(turn.rules)
+                        if (move.pi.in_rule_list(turn.rules)):
+                            # print("move pi in rules")
+                            node_parent = move.parent
+                            move_parent = node_parent.get_move()
+                            if (isinstance(move_parent, AssertPi)):
+                                # print("move parent is assert pi")
+                                if (move_parent.get_player() == turn):
+                                    # print("move parent is me")
+                                    move_list.append(Precedence(turn, move_parent.pi, node))
+        return move_list
+        
+# Actual dialogue class
 
 class Dialogue:
     def __init__(self, human, robot, actions):
@@ -174,6 +343,9 @@ class Dialogue:
        self.move_list.append(IDidActionType())
        self.move_list.append(WhyActionType())
        self.move_list.append(IDidntType())
+       self.move_list.append(AssertPiType())
+       self.move_list.append(NotInLibraryType())
+       self.move_list.append(PrecedenceType())
     
     def move(self):
         legal_moves = self.calculate_legal_moves();
@@ -212,6 +384,8 @@ class Dialogue:
         if (len(self.store.node_list()) == 0):
             return False
         for node in self.store.node_list():
+            if (node.empty):
+                continue
             move = node.get_move()
             if (not move.is_closed()):
                 return False;
@@ -223,6 +397,8 @@ class Dialogue:
     def __repr__(self):
         string = "Dialogue:\n"
         for node in self.store.node_list():
+            if (node.empty):
+                continue
             move = node.get_move()
             string += str(move) + "\n"
         return string

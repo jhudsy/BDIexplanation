@@ -32,7 +32,7 @@ event: NUMBER ":" _effect
 
 def readfile(filename):
 
-  ruleset=set()
+  ruleset=[]
   events={}
   with open(filename,'r') as myfile:
     data=myfile.read()
@@ -59,7 +59,7 @@ def readfile(filename):
       effects.add(RemoveGoal(a.children[0].children[0].value))
     for a  in r.find_data("action"):  
       effects.add(ExecuteAction(a.children[0].value))
-    ruleset.add(Rule(beliefs,goals,effects))
+    ruleset.append(Rule(beliefs,goals,effects))
 
 
   for e in o.find_data("event"):
