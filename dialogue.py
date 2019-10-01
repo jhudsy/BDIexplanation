@@ -3,8 +3,8 @@ from dialogue_tree import *
 from rules import ExecuteAction
 
 # For ease of debugging
-action_start = 4
-action_end = 5
+action_start = 12
+action_end = 13
 
 # Specific moves
 class Move:
@@ -160,6 +160,16 @@ class Precedence(Move):
     def __repr__(self):
         return str(self.player.name()) + ": " + str(self.pi) + " has precedence in my plan library"
         
+class AcceptPi(Move):
+    def __init__(self, turn, pi, i, parent):
+        Move.__init__(self, parent, turn)
+        self.pi = pi
+        self.trace_point = i
+        self.closed = True
+        
+    def __repr__(self):
+        return str(self.player.name()) + ": I agree that " + str(self.pi) + " was selected at " + str(self.trace_point)
+        
 class WhyBelief(Move):
     def __init__(self, turn, belief, i, parent):
         Move.__init__(self, parent, turn)
@@ -275,7 +285,7 @@ class AssertPiType(MoveType):
                         rule = player_internal_trace_point[5]
                         if (rule.effects == set()):
                             break;
-                        if (rule != move.pi):
+                        if (not rule.rule_equals(move.pi)):
                             potential_new_move = AssertPi(turn, rule, move.trace_point,node)
                             legal_move = True
                             for node1 in store.node_list():
@@ -327,6 +337,25 @@ class PrecedenceType(MoveType):
                                     move_list.append(Precedence(turn, move_parent.pi, node))
         return move_list
         
+class AcceptPiType(MoveType):
+    def legal(sefl, store, turn, actions):
+        move_list = []
+        for node in store.node_list():
+            if (node.empty):
+                continue
+            move = node.get_move()
+            if (not move.is_closed()):
+                if (move.get_player() != turn):
+                    if (isinstance(move, AssertPi)):
+                        trace_point_num = move.trace_point
+                        trace_point = turn.trace[trace_point_num]
+                        rule = trace_point[5]
+                        if (rule.effects == set()):
+                            break;
+                        if (rule.rule_equals(move.pi)):
+                            move_list.append(AcceptPi(turn, rule, trace_point_num, node))
+        return move_list
+        
 # Actual dialogue class
 
 class Dialogue:
@@ -346,6 +375,7 @@ class Dialogue:
        self.move_list.append(AssertPiType())
        self.move_list.append(NotInLibraryType())
        self.move_list.append(PrecedenceType())
+       self.move_list.append(AcceptPiType())
     
     def move(self):
         legal_moves = self.calculate_legal_moves();

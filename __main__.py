@@ -37,6 +37,7 @@ if __name__=="__main__":
         #for t in hmm.trace:
     #print(t)
     print(public_trace)
+    print(hmm.trace)
     dialogue=Dialogue(hmm,kb,actions)
     while (dialogue.can_continue):
         print("\nDIALOGUE TURN:")
