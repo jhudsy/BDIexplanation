@@ -1,10 +1,10 @@
 import random
 from dialogue_tree import *
-from rules import ExecuteAction
+from rules import ExecuteAction, AddBelief, RemoveBelief, Perception
 
 # For ease of debugging
-action_start = 12
-action_end = 13
+action_start = 14
+action_end = 15
 
 # Specific moves
 class Move:
@@ -169,7 +169,79 @@ class AcceptPi(Move):
         
     def __repr__(self):
         return str(self.player.name()) + ": I agree that " + str(self.pi) + " was selected at " + str(self.trace_point)
+                
+class WhyPi(Move):
+    def __init__(self, turn, pi, i, parent):
+        Move.__init__(self, parent, turn)
+        self.pi = pi
+        self.trace_point = i
+        self.closed = False
         
+    def check_closure(self, position, store):
+        for bel in self.pi.beliefs:
+            bel_literal = AddBelief(bel) # At the moment plans only contain positive beliefs
+            bl_closed = False
+            for node in store.node_list():
+                move = node.get_move()
+                if (isinstance(move, AssertBelief)):
+                    if (move.belief.effect_equals(bel_literal)):
+                        if (move.trace_point == self.trace_point):
+                            bl_closed = True
+                            break;
+            if (not bl_closed):
+                return
+            self.closed = True
+            
+    def __repr__(self):
+        return str(self.player.name()) + ": Why select " + str(self.pi) + " at " + str(self.trace_point)
+        
+class AssertBelief(Move):
+    def __init__(self, turn, belief, i1, i2, parent):
+        Move.__init__(self, parent, turn)
+        self.belief = belief
+        self.lowerbound = i1
+        self.trace_point = i2
+        
+    def check_closure(self, position, store):
+        for node in store.node_list():
+            move = node.get_move()
+            if (isinstance(move, WhyBelief)):
+                if (move.belief == self.belief and move.trace_point == self.lowerbound):
+                    self.closed = True
+                    break
+            if (isinstance(move, AssertBelief)):
+                notbelief = move.belief
+                if (isinstance(self.belief, AddBelief)):
+                    if (isinstance(notbelief, RemoveBelief)):
+                        if (self.belief.belief == notbelief.belief):
+                            if (self.trace_point == move.trace_point):
+                                self.closed = True
+                                break
+                if (isinstance(self.belief, RemoveBelief)):
+                    if (isinstance(notbelief, AddBelief)):
+                        if (self.belief.belief == notbelief.belief):
+                            if (self.trace_point == move.trace_point):
+                                self.closed = True
+                                break
+            if (isinstance(move, AcceptBelief)):
+                if (move.belief == self.belief and move.trace_point == self.trace_point and move.lowerbound == self.lowerbound):
+                    self.closed = True
+                    break
+
+    def __repr__(self):
+        return str(self.player.name()) + ": " + str(self.belief) + " at time " + str(self.lowerbound) + " and it remained so until at least " + str(self.trace_point)
+        
+class AcceptBelief(Move):
+    def __init__(self, turn, belief, i1, i2, parent):
+        Move.__init__(self, parent, turn)
+        self.belief = belief
+        self.lowerbound = i1
+        self.trace_point = i2
+        self.closed = True
+        
+    def __repr__(self):
+        return str(self.player.name()) + ": I agree " + str(self.belief) + " between " + str(self.lowerbound) + " and " + str(self.trace_point)
+
 class WhyBelief(Move):
     def __init__(self, turn, belief, i, parent):
         Move.__init__(self, parent, turn)
@@ -177,12 +249,30 @@ class WhyBelief(Move):
         self.trace_point = i
         self.closed = False
         
-class WhyPi(Move):
-    def __init__(self, turn, pi, i, parent):
-        Move.__init__(self, turn, parent)
-        self.pi = pi
-        self.trace_point = i
-        self.closed = False
+    def check_closure(self, position, store):
+        for node in store.node_list():
+            move = node.get_move()
+            if (isinstance(move, AssertPi)):
+                if (move.trace_point == self.trace_point):
+                    self.closed = True
+            if (isinstance(move, Percept)):
+                if (move.trace_point == self.trace_point):
+                    if (move.belief.effect_equals(self.belief)):
+                        self.closed = True
+    
+    def __repr__(self):
+        return str(self.player.name()) + ": Why " + str(self.belief) + " at " + str(self.trace_point)
+        
+class Percept(Move):
+    def __init__(self, turn, belief, i, parent):
+        Move.__init__(self, parent, turn)
+        self.belief = belief
+        self.trace_point = i;
+        self.closed = True
+        
+    def __repr__(self):
+        return str(self.player.name()) + ": I perceived " + str(self.belief) + " at " + str(self.trace_point)
+        
 
 # Types of move - there may be several of each sort that are legal at any one point
 class MoveType:
@@ -338,7 +428,7 @@ class PrecedenceType(MoveType):
         return move_list
         
 class AcceptPiType(MoveType):
-    def legal(sefl, store, turn, actions):
+    def legal(self, store, turn, actions):
         move_list = []
         for node in store.node_list():
             if (node.empty):
@@ -355,6 +445,140 @@ class AcceptPiType(MoveType):
                         if (rule.rule_equals(move.pi)):
                             move_list.append(AcceptPi(turn, rule, trace_point_num, node))
         return move_list
+        
+class WhyPiType(MoveType):
+    def legal(self, store, turn, actions):
+        move_list = []
+        for node in store.node_list():
+            if (node.empty):
+                continue
+            move = node.get_move()
+            if (not move.is_closed()):
+                if (move.get_player() != turn):
+                    if (isinstance(move, AssertPi)):
+                        move_list.append(WhyPi(turn, move.pi, move.trace_point, node))
+        return move_list
+        
+class AssertBeliefType(MoveType):
+    def legal(self, store, turn, actions):
+        move_list = []
+        for node in store.node_list():
+            if (node.empty):
+                continue
+            move = node.get_move()
+            if (not move.is_closed()):
+                if (move.get_player() != turn):
+                    if (isinstance(move, WhyPi)):
+                        pi = move.pi
+                        trace_point = move.trace_point
+                        for belief in pi.beliefs:
+                            # print(belief)
+                            # if (isinstance(belief, AddBelief)):
+                            #     print("b")
+                            #     bel = belief.belief
+                            for x in range(trace_point, 0, -1):
+                                if (belief in turn.trace[x][2]):
+                                    move_list.append(AssertBelief(turn, AddBelief(belief), x, move.trace_point, node))
+                                    break
+                            # if (isinstance(belief, RemoveBelief)):
+                            #     print("c")
+                            #     bel = belief.belief
+                            #     for x in range(trace_point, 0, -1):
+                            #         if (bel in turn.trace[x][3]):
+                            #             move_list.append(AssertBelief(turn, belief, x, move.trace_point, node))
+                            #             break
+                            #         if (x == 1):
+                            #             move_list.append(AssertBelief(turn, belief, x, move.trace_point, node))
+                    if (isinstance(move, AssertBelief)):
+                        notbelief = move.belief
+                        upperbound = move.trace_point
+                        lowerbound = move.lowerbound
+                        for x in range(upperbound, lowerbound, -1):
+                            if (isinstance(notbelief, AddBelief)):
+                                bel = notbelief.belief
+                                if (bel in turn.trace[x][3]):
+                                    move_list.append(AssertBelief(turn, RemoveBelief(bel), x, move.upperbound, node))
+                                    break
+                            if (isinstance(notbelief, RemoveBelief)):
+                                bel = notbelief.belief
+                                if (bel in turn.trace[x][2]):
+                                    move_list.append(AssertBelief(turn, AddBelief(bel), x, move.upperbound, node))
+                                    break
+        return move_list
+        
+class AcceptBeliefType(MoveType):
+    def legal(self, store, turn, actions):
+        move_list = []
+        for node in store.node_list():
+            if (node.empty):
+                continue
+            move = node.get_move()
+            if (not move.is_closed()):
+                if (move.get_player() != turn):
+                    if (isinstance(move, AssertBelief)):
+                        bel_literal = move.belief
+                        if (isinstance(bel_literal, AddBelief)):
+                            belief = bel_literal.belief
+                            lowerbound = move.lowerbound
+                            upperbound = move.trace_point
+                            for x in range(lowerbound, upperbound + 1):
+                                holds = True
+                                if (belief not in turn.trace[x][0]):
+                                    holds = False
+                                    break
+                            if (holds):
+                                move_list.append(AcceptBelief(turn, bel_literal, lowerbound, upperbound, node))
+                        if (isinstance(bel_literal, RemoveBelief)):
+                            belief = bel_literal.belief
+                            lowerbound = move.lowerbound
+                            upperbound = move.trace_point
+                            for x in range(lowerbound, upperbound + 1):
+                                holds = True
+                                if (belief in turn.trace[x][0]):
+                                    holds = False
+                                    break
+                            if (holds):
+                                move_list.append(AcceptBelief(turn, bel_literal, lowerbound, upperbound, node))
+        return move_list
+        
+class WhyBeliefType(MoveType):
+    def legal(self, store, turn, actions):
+        move_list = []
+        for node in store.node_list():
+            if (node.empty):
+                continue
+            move = node.get_move()
+            if (not move.is_closed()):
+                if (move.get_player() != turn):
+                    if (isinstance(move, AssertBelief)):
+                        bel_literal = move.belief
+                        move_list.append(WhyBelief(turn, bel_literal, move.lowerbound, node))
+        return move_list
+
+class PerceptType(MoveType):
+    def legal(self, store, turn, actions):
+        move_list = []
+        for node in store.node_list():
+            if (node.empty):
+                continue
+            move = node.get_move()
+            if (not move.is_closed()):
+                if (move.get_player() != turn):
+                    if (isinstance(move, WhyBelief)):
+                        bel_literal = move.belief
+                        trace_point = move.trace_point
+                        if (isinstance(turn.trace[trace_point][5], Perception)):
+                            if (isinstance(bel_literal, AddBelief)):
+                                for belief in turn.trace[trace_point][0]:
+                                    if (belief == bel_literal.belief):
+                                        move_list.append(Percept(turn, bel_literal, trace_point, node))
+                            if (isinstance(bel_literal, RemoveBelief)):
+                                for belief in turn.trace[trace_point][1]:
+                                    if (belief == bel_literal.belief):
+                                        move_list.append(Percept(turn, bel_literal, trace_point, node))
+        return move_list
+                        
+            
         
 # Actual dialogue class
 
@@ -376,6 +600,11 @@ class Dialogue:
        self.move_list.append(NotInLibraryType())
        self.move_list.append(PrecedenceType())
        self.move_list.append(AcceptPiType())
+       self.move_list.append(WhyPiType())
+       self.move_list.append(AssertBeliefType())
+       self.move_list.append(AcceptBeliefType())
+       self.move_list.append(WhyBeliefType())
+       self.move_list.append(PerceptType())
     
     def move(self):
         legal_moves = self.calculate_legal_moves();

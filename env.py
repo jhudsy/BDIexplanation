@@ -17,7 +17,7 @@ class KB:
                     add_beliefs.add(e.belief)
                 if (isinstance(e, RemoveBelief)):
                     removed_beliefs.add(e.belief)
-        self.trace.append([set(self.beliefs),set(self.goals),set(add_beliefs),set(removed_beliefs),set(),Rule(set(),set(),set()),self.time])
+        self.trace.append([set(self.beliefs),set(self.goals),set(add_beliefs),set(removed_beliefs),set(),Perception(),self.time])
         self.time += 1
 
     def tick(self,public_trace,public_actions):

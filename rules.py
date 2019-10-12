@@ -131,7 +131,7 @@ class Rule:
         if (not_present):
              return False
     return True
-    
+        
   def in_rule_list(self, rule_list):
     for rule in rule_list:
         if (self.rule_equals(rule)):
@@ -148,6 +148,19 @@ class Rule:
       for e in self.effects:
           s+=str(e)+","
       return s
+      
+class Perception(Rule):
+    def __init__(self):
+        Rule.__init__(self)
+    
+    def rule_equals(self, rule):
+        return False
+
+    def in_rule_list(self, rule_list):
+        return False
+        
+    def __repr__(self):
+        return "perception"
 
 ##########################################
 

@@ -30,7 +30,7 @@ class HUMAN_KB:
                     add_beliefs.add(e.belief)
                 if (isinstance(e, RemoveBelief)):
                     removed_beliefs.add(e.belief)
-        self.trace.append([set(self.beliefs),set(self.goals),set(add_beliefs),set(removed_beliefs),set(),Rule(set(),set(),set()),self.time])
+        self.trace.append([set(self.beliefs),set(self.goals),set(add_beliefs),set(removed_beliefs),set(),Perception(),self.time])
         self.time += 1
 
     def tick(self, public_trace, public_actions):
@@ -43,6 +43,7 @@ class HUMAN_KB:
         else:
             rule=Rule(set(),set(),set())
 
+        # Rule Selected
         self.trace.append([set(self.beliefs),set(self.goals),set(),set(),set(),rule,self.time])
         self.time += 1
 
@@ -59,7 +60,7 @@ class HUMAN_KB:
             if (isinstance(e, RemoveBelief)):
                 removed_beliefs.add(e.belief)
 
-        #record the trace, which takes the form of beliefs, goals and applied rule and time stamp
+        # Rule applied
         self.trace.append([set(self.beliefs),set(self.goals),set(add_beliefs),set(removed_beliefs),actions,Rule(set(),set(),set()),self.time])
 
 
