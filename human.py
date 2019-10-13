@@ -21,7 +21,7 @@ class HUMAN_KB:
     #         model.append(tick)
     
     
-    def percieve(self, belief_changes):
+    def percieve(self, belief_changes, trace_point):
         add_beliefs = set();
         removed_beliefs = set();
         if belief_changes != None:
@@ -30,6 +30,7 @@ class HUMAN_KB:
                     add_beliefs.add(e.belief)
                 if (isinstance(e, RemoveBelief)):
                     removed_beliefs.add(e.belief)
+                e.apply(self, trace_point)
         self.trace.append([set(self.beliefs),set(self.goals),set(add_beliefs),set(removed_beliefs),set(),Perception(),self.time])
         self.time += 1
 
@@ -59,6 +60,7 @@ class HUMAN_KB:
                 add_beliefs.add(e.belief)
             if (isinstance(e, RemoveBelief)):
                 removed_beliefs.add(e.belief)
+            e.apply(self, public_trace)
 
         # Rule applied
         self.trace.append([set(self.beliefs),set(self.goals),set(add_beliefs),set(removed_beliefs),actions,Rule(set(),set(),set()),self.time])

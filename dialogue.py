@@ -478,7 +478,15 @@ class AssertBeliefType(MoveType):
                             #     bel = belief.belief
                             for x in range(trace_point, 0, -1):
                                 if (belief in turn.trace[x][2]):
-                                    move_list.append(AssertBelief(turn, AddBelief(belief), x, move.trace_point, node))
+                                    new_move = AssertBelief(turn, AddBelief(belief), x+1, move.trace_point, node)
+                                    not_repeat = True
+                                    for node in store.node_list():
+                                        move1 = node.get_move()
+                                        if (move1 == new_move):
+                                            not_repeat = False
+                                            break
+                                    if not_repeat:
+                                        move_list.append(new_move)
                                     break
                             # if (isinstance(belief, RemoveBelief)):
                             #     print("c")
@@ -584,6 +592,7 @@ class PerceptType(MoveType):
 
 class Dialogue:
     def __init__(self, human, robot, actions, public_trace):
+       # Basic strategy mechanism -- needs to be configurable somehow
        # self.strategy = "random"
        self.strategy = "public_action_diff"
     

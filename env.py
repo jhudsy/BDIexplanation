@@ -8,7 +8,7 @@ class KB:
         self.trace=[] #captures the beliefs,goals and rules applied at any point in time
         self.time=0
         
-    def percieve(self, belief_changes):
+    def percieve(self, belief_changes, trace_point):
         add_beliefs = set();
         removed_beliefs = set();
         if belief_changes != None:
@@ -17,6 +17,7 @@ class KB:
                     add_beliefs.add(e.belief)
                 if (isinstance(e, RemoveBelief)):
                     removed_beliefs.add(e.belief)
+            e.apply(self, trace_point)
         self.trace.append([set(self.beliefs),set(self.goals),set(add_beliefs),set(removed_beliefs),set(),Perception(),self.time])
         self.time += 1
 
@@ -44,12 +45,11 @@ class KB:
             if (isinstance(e, RemoveBelief)):
                 removed_beliefs.add(e.belief)
 
+        self.execute(rule,public_trace)
+        self.goals=self.goals-self.beliefs #remove goals that were achieved
         #record the trace, which takes the form of beliefs, goals and applied rule and time stamp
         self.trace.append([set(self.beliefs),set(self.goals),set(add_beliefs),set(removed_beliefs),actions,Rule(set(),set(),set()),self.time])
 
-
-        self.execute(rule,public_trace)
-        self.goals=self.goals-self.beliefs #remove goals that were achieved
         self.time+=1
 
     def find_applicable_rules(self):

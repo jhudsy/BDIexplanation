@@ -18,14 +18,14 @@ if __name__=="__main__":
     for i in range(0,10):
         trace_point = [];
         trace_point.append(i);
-        if ev.get(i)!=None:
-            for e in ev.get(i):
-              e.apply(kb,trace_point)
-        kb.percieve(ev.get(i))
-        if hev.get(i)!=None:
-            for e in hev.get(i):
-              e.apply(hmm,trace_point)
-        hmm.percieve(ev.get(i))
+        #if ev.get(i)!=None:
+        #    for e in ev.get(i):
+        #      e.apply(kb,trace_point)
+        kb.percieve(ev.get(i), trace_point)
+        #if hev.get(i)!=None:
+        #    for e in hev.get(i):
+        #      e.apply(hmm,trace_point)
+        hmm.percieve(hev.get(i), trace_point)
         kb.tick(trace_point,actions)
         hmm.tick(trace_point,actions)
 #print(kb)
