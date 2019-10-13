@@ -3,8 +3,8 @@ from dialogue_tree import *
 from rules import ExecuteAction, AddBelief, RemoveBelief, Perception
 
 # For ease of debugging
-action_start = 14
-action_end = 15
+action_start = 1
+action_end = 30
 
 # Specific moves
 class Move:
@@ -190,7 +190,7 @@ class WhyPi(Move):
                             break;
             if (not bl_closed):
                 return
-            self.closed = True
+        self.closed = True
             
     def __repr__(self):
         return str(self.player.name()) + ": Why select " + str(self.pi) + " at " + str(self.trace_point)
@@ -583,7 +583,10 @@ class PerceptType(MoveType):
 # Actual dialogue class
 
 class Dialogue:
-    def __init__(self, human, robot, actions):
+    def __init__(self, human, robot, actions, public_trace):
+       # self.strategy = "random"
+       self.strategy = "public_action_diff"
+    
        self.store=DialogueTree()
        self.turn = human;
        self.initiator = human;
@@ -591,6 +594,7 @@ class Dialogue:
        self.move_list = [];
        self.can_continue = True;
        self.actions = actions;
+       self.public_trace = public_trace
        
        self.move_list.append(WhyNotActionType())
        self.move_list.append(IDidActionType())
@@ -628,7 +632,49 @@ class Dialogue:
         return legal_move_list
     
     def choose_next_move(self, move_list):
-        return random.choice(move_list)
+        if (self.strategy == "random"):
+            return random.choice(move_list)
+        if (self.strategy == "public_action_diff"):
+            new_move_list = []
+            if (self.store.empty):
+                for move in move_list:
+                    trace_point = move.trace_point
+                    if (trace_point % 3 == 2): # This is a point where an action might have taken place
+                        # print(move)
+                        public_trace_point = (trace_point // 3) # This should be the relevant point in the public trace
+                        # print(public_trace_point)
+                        if (len(self.public_trace[public_trace_point]) > 1): # Someone was expecting an action here.
+                            if (len(self.public_trace[public_trace_point]) > 2): # Everyone was expecting an action here.
+                                robot_action_string = self.public_trace[public_trace_point][1].split(":")[1]
+                                human_action_string = self.public_trace[public_trace_point][2].split(":")[1]
+                                if (not robot_action_string == human_action_string):
+                                    if (isinstance(move, WhyAction)):
+                                        if (move.action == robot_action_string):
+                                            new_move_list.append(move)
+                                    if (isinstance(move, WhyNotAction)):
+                                        if (move.action == human_action_string):
+                                            new_move_list.append(move)
+                            else:
+                                action_array = self.public_trace[public_trace_point][1].split(":")
+                                actor = action_array[0]
+                                action = action_array[1]
+                                if (actor == "robot"):
+                                    if (isinstance(move, WhyAction)):
+                                        # print(move)
+                                        # print(action)
+                                        # print(move.action)
+                                        if (move.action == action):
+                                            new_move_list.append(move)
+                                else:
+                                    if (isinstance(move, WhyNotAction)):
+                                        if (move.action == action):
+                                            new_move_list.append(move)
+                        # print(self.public_trace[public_trace_point])
+                        # print(self.turn.trace[trace_point])
+                        # public_trace_point == public_trace[trace_point]
+                return random.choice(new_move_list)
+            else:
+                return random.choice(move_list)
         
     def propagate_closure(self):
         i = 0

@@ -11,8 +11,8 @@ class ExecuteAction(RuleEffect):
     self.action=action
 
   def apply(self,kb,public_trace):
-      print ("human expects "+self.action)
-      s = "h:"+self.action
+      print (kb.name() + " does/expects "+self.action)
+      s = kb.name() + ":"+self.action
       public_trace.append(s)
       
   def effect_equals(self, effect):

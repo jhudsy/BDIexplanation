@@ -4,8 +4,6 @@ from dialogue import *
 from rule_parser import readfile
 import sys
 
-
-
 if __name__=="__main__":
     kb=KB()
     hmm=HUMAN_KB()
@@ -23,11 +21,11 @@ if __name__=="__main__":
         if ev.get(i)!=None:
             for e in ev.get(i):
               e.apply(kb,trace_point)
-            kb.percieve(ev.get(i))
+        kb.percieve(ev.get(i))
         if hev.get(i)!=None:
             for e in hev.get(i):
               e.apply(hmm,trace_point)
-            hmm.percieve(ev.get(i))
+        hmm.percieve(ev.get(i))
         kb.tick(trace_point,actions)
         hmm.tick(trace_point,actions)
 #print(kb)
@@ -38,7 +36,8 @@ if __name__=="__main__":
     #print(t)
     print(public_trace)
     print(hmm.trace)
-    dialogue=Dialogue(hmm,kb,actions)
+    print(kb.trace)
+    dialogue=Dialogue(hmm,kb,actions,public_trace)
     while (dialogue.can_continue):
         print("\nDIALOGUE TURN:")
         dialogue.move()
