@@ -478,7 +478,7 @@ class AssertBeliefType(MoveType):
                             #     bel = belief.belief
                             for x in range(trace_point, 0, -1):
                                 if (belief in turn.trace[x][2]):
-                                    new_move = AssertBelief(turn, AddBelief(belief), x+1, move.trace_point, node)
+                                    new_move = AssertBelief(turn, AddBelief(belief), x, move.trace_point, node)
                                     not_repeat = True
                                     for node in store.node_list():
                                         move1 = node.get_move()
@@ -505,7 +505,7 @@ class AssertBeliefType(MoveType):
                             if (isinstance(notbelief, AddBelief)):
                                 bel = notbelief.belief
                                 if (bel in turn.trace[x][3]):
-                                    move_list.append(AssertBelief(turn, RemoveBelief(bel), x, move.upperbound, node))
+                                    move_list.append(AssertBelief(turn, RemoveBelief(bel), x, move.trace_point, node))
                                     break
                             if (isinstance(notbelief, RemoveBelief)):
                                 bel = notbelief.belief
