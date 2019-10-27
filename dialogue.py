@@ -597,10 +597,10 @@ class AssertBeliefType(MoveType):
                             for x in range(trace_point, 0, -1):
                                 if (belief in turn.trace[x][2]):
                                     new_move = AssertBelief(turn, AddBelief(belief), x, move.trace_point, node)
-                                    print(new_move)
+                                    # print(new_move)
                                     not_repeat = self.not_repeat(store, new_move)
                                     if not_repeat:
-                                        print("not repeated")
+                                        # print("not repeated")
                                         move_list.append(new_move)
                                     break
                             # if (isinstance(belief, RemoveBelief)):
@@ -687,11 +687,11 @@ class WhyBeliefType(MoveType):
             if (node.empty):
                 continue
             move = node.get_move()
-            print("why belief" + move.__repr__())
+            # print("why belief" + move.__repr__())
             if (not move.is_closed()):
-                print("a")
+                # print("a")
                 if (move.get_player() != turn):
-                    print("b")
+                    # print("b")
                     if (isinstance(move, AssertBelief)):
                         bel_literal = move.belief
                         move_list.append(WhyBelief(turn, bel_literal, move.lowerbound, node))
@@ -709,7 +709,7 @@ class PerceptType(MoveType):
                     if (isinstance(move, WhyBelief)):
                         bel_literal = move.belief
                         trace_point = move.trace_point
-                        print(turn.trace[trace_point])
+                        # print(turn.trace[trace_point])
                         if (isinstance(turn.trace[trace_point][5], Perception)):
                             if (isinstance(bel_literal, AddBelief)):
                                 for belief in turn.trace[trace_point][2]:
@@ -757,7 +757,7 @@ class Dialogue:
     def move(self):
         legal_moves = self.calculate_legal_moves();
         if (len(legal_moves) == 0):
-            print("no legal moves for " + self.turn.name())
+            # print("no legal moves for " + self.turn.name())
             if (self.turn == self.responder):
                 self.turn = self.initiator
             else:

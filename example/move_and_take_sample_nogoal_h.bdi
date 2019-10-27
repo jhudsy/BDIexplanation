@@ -1,0 +1,12 @@
+take_sample_message -> -take_sample_message,+goal_move_to_location
+safe_terrain, at_start, goal_move_to_location -> .move1,+at_waypoint,-at_start
+safe_terrain,at_waypoint,goal_move_to_location -> .move2,+at_location,-at_waypoint,-goal_move_to_location,+goal_take_sample
+at_location,goal_take_sample -> -goal_take_sample,.drill
+1:+at_start
+2:+safe_terrain
+3:+take_sample_message
+
+
+
+
+
