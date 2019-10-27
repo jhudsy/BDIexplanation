@@ -27,6 +27,11 @@ class Move:
             self.parent.set_move(self)
         else:
             self.parent.add_child(self)
+            
+    def move_equals(self, move):
+        if (self.player == move.player):
+            return True
+        return False
         
 class WhyNotAction(Move):
     def __init__(self, turn, action, i, parent):
@@ -50,6 +55,14 @@ class WhyNotAction(Move):
     
     def __repr__(self):
         return str(self.player.name()) + ": Why Not " + str(self.action) + " at " + str(self.trace_point)
+        
+    def move_equals(self, move):
+        if (isinstance(move, WhyNotAction)):
+            if super.move_equals(move):
+                if self.action == move.action:
+                    if self.trace_point == move.trace_point:
+                        return True
+        return False
                 
 class WhyAction(Move):
     def __init__(self, turn, action, i, parent):
@@ -76,6 +89,14 @@ class WhyAction(Move):
                     if (move.trace_point == self.trace_point):
                         self.closed = True
                         break
+    
+    def move_equals(self, move):
+        if (isinstance(move, WhyAction)):
+            if super().move_equals(move):
+                if self.action == move.action:
+                    if self.trace_point == move.trace_point:
+                        return True
+        return False
                 
     def __repr__(self):
         return str(self.player.name()) + ": Why " + str(self.action) + " at " + str(self.trace_point)
@@ -87,6 +108,14 @@ class IDid(Move):
         self.trace_point = i
         self.closed = True
         
+    def move_equals(self, move):
+        if (isinstane(move, IDid)):
+            if super().move_equals(move):
+                if self.action == move.action:
+                    if self.trace_point == move.trace_point:
+                        return True
+        return False
+        
     def __repr__(self):
         return str(self.player.name()) + ": I Did " + str(self.action) + " at " + str(self.trace_point)
         
@@ -96,6 +125,14 @@ class IDidnt(Move):
         self.action = action
         self.trace_point = i
         self.closed = True
+        
+    def move_equals(self, move):
+        if (isinstane(move, IDidnt)):
+            if super().move_equals(move):
+                if self.action == move.action:
+                    if self.trace_point == move.trace_point:
+                        return True
+        return False
         
     def __repr__(self):
         if (self.player.name() == "robot"):
@@ -119,12 +156,18 @@ class AssertPi(Move):
                         if (isinstance(move, AssertPi)):
                             node_parent = move.parent
                             move_parent = node_parent.get_move()
-                            if (move_parent == self):
+                            if (move_parent.move_equals(self)):
                                 self.closed = True
                                 break
                         if (isinstance(move, WhyPi)):
                             self.closed = True
                             break
+                        if (isinstance(move, AcceptPi)):
+                            node_parent = move.parent
+                            move_parent = node_parent.get_move()
+                            if (move_parent.move_equals(self)):
+                                self.closed = True
+                                break
             else:
                 if (move.get_player() != self.get_player()):
                     if (isinstance(move, NotInLibrary)):
@@ -134,10 +177,17 @@ class AssertPi(Move):
                     if (isinstance(move, Precedence)):
                         node_parent = move.parent
                         move_parent = node_parent.get_move()
-                        if (move_parent == self):
+                        if (move_parent.move_equals(self)):
                             self.closed = True
                             break
-                        
+                            
+    def move_equals(self, move):
+        if (isinstance(move, AssertPi)):
+            if (super().move_equals(move)):
+                if self.pi == move.pi:
+                    if self.trace_point == move.trace_point:
+                        return True
+        return False
                         
     def __repr__(self):
         return str(self.player.name()) + ": Selected " + str(self.pi) + " at " + str(self.trace_point)
@@ -148,6 +198,13 @@ class NotInLibrary(Move):
         self.pi = pi
         self.closed = True
         
+    def move_equals(self, move):
+        if (isinstance(move, NotInLibrary)):
+            if (super().move_equals(move)):
+                if self.pi == move.pi:
+                    return True
+        return False
+        
     def __repr__(self):
         return str(self.player.name()) + ": " + str(self.pi) + " is not in my plan library"
         
@@ -157,6 +214,14 @@ class Precedence(Move):
         self.pi = pi
         self.closed = True
         
+        
+    def move_equals(self, move):
+        if (isinstance(move, Precedence)):
+            if (super.move_equals(move)):
+                if self.pi == move.pi:
+                    return True
+        return False
+
     def __repr__(self):
         return str(self.player.name()) + ": " + str(self.pi) + " has precedence in my plan library"
         
@@ -166,6 +231,15 @@ class AcceptPi(Move):
         self.pi = pi
         self.trace_point = i
         self.closed = True
+        
+        
+    def move_equals(self, move):
+        if (isinstance(move, AcceptPi)):
+            if (super().move_equals(move)):
+                if self.pi == move.pi:
+                    if self.trace_point == move.trace_point:
+                        return True
+        return False
         
     def __repr__(self):
         return str(self.player.name()) + ": I agree that " + str(self.pi) + " was selected at " + str(self.trace_point)
@@ -192,6 +266,13 @@ class WhyPi(Move):
                 return
         self.closed = True
             
+    def move_equals(self, move):
+        if (isinstance(move, WhyPi)):
+            if (super().move_equals(move)):
+                if self.pi == move.pi:
+                    if self.trace_point == move.trace_point:
+                        return True
+
     def __repr__(self):
         return str(self.player.name()) + ": Why select " + str(self.pi) + " at " + str(self.trace_point)
         
@@ -215,18 +296,30 @@ class AssertBelief(Move):
                     if (isinstance(notbelief, RemoveBelief)):
                         if (self.belief.belief == notbelief.belief):
                             if (self.trace_point == move.trace_point):
-                                self.closed = True
-                                break
+                                if (self.lowerbound < move.lowerbound):
+                                    self.closed = True
+                                    break
                 if (isinstance(self.belief, RemoveBelief)):
                     if (isinstance(notbelief, AddBelief)):
                         if (self.belief.belief == notbelief.belief):
                             if (self.trace_point == move.trace_point):
-                                self.closed = True
-                                break
+                                if (self.lowerbound < move.lowerbound):
+                                    self.closed = True
+                                    break
             if (isinstance(move, AcceptBelief)):
                 if (move.belief == self.belief and move.trace_point == self.trace_point and move.lowerbound == self.lowerbound):
                     self.closed = True
                     break
+                    
+    def move_equals(self, move):
+        if (isinstance(move, AssertBelief)):
+             if super().move_equals(move):
+                 if self.belief.effect_equals(move.belief):
+                    if self.lowerbound == move.lowerbound:
+                        if self.trace_point == move.trace_point:
+                             return True
+        return False
+            
 
     def __repr__(self):
         return str(self.player.name()) + ": " + str(self.belief) + " at time " + str(self.lowerbound) + " and it remained so until at least " + str(self.trace_point)
@@ -239,6 +332,15 @@ class AcceptBelief(Move):
         self.trace_point = i2
         self.closed = True
         
+    def move_equals(self, move):
+        if (isinstance(move, AcceptBelief)):
+             if super().move_equals(move):
+                if self.belief.effect_equals(move.belief):
+                    if self.lowerbound == move.lowerbound:
+                        if self.trace_point == move.trace_point:
+                            return True
+        return False
+
     def __repr__(self):
         return str(self.player.name()) + ": I agree " + str(self.belief) + " between " + str(self.lowerbound) + " and " + str(self.trace_point)
 
@@ -253,13 +355,20 @@ class WhyBelief(Move):
         for node in store.node_list():
             move = node.get_move()
             if (isinstance(move, AssertPi)):
-                if (move.trace_point == self.trace_point):
+                if (move.trace_point == self.trace_point - 1):
                     self.closed = True
             if (isinstance(move, Percept)):
                 if (move.trace_point == self.trace_point):
                     if (move.belief.effect_equals(self.belief)):
                         self.closed = True
     
+    def move_equals(self, move):
+        if (isinstance(move, WhyBelief)):
+             if super().move_equals(move):
+                if self.belief.effect_equals(move.belief):
+                    if self.trace_point == move.trace_point:
+                        return True
+
     def __repr__(self):
         return str(self.player.name()) + ": Why " + str(self.belief) + " at " + str(self.trace_point)
         
@@ -270,6 +379,13 @@ class Percept(Move):
         self.trace_point = i;
         self.closed = True
         
+    def move_equals(self, move):
+         if (isinstance(move, Percept)):
+              if super().move_equals(move):
+                 if self.belief.effect_equals(move.belief):
+                     if self.trace_point == move.trace_point:
+                         return True
+
     def __repr__(self):
         return str(self.player.name()) + ": I perceived " + str(self.belief) + " at " + str(self.trace_point)
         
@@ -368,8 +484,10 @@ class AssertPiType(MoveType):
                         rule = player_internal_trace_point[5]
                         if (rule.effects == set()):
                             break;
-                        if (move.belief in rule.effects):
-                            move_list.append(AssertPi(turn, rule, move.trace_point - 1,node))
+                        for effect in rule.effects:
+                            if (move.belief.effect_equals(effect)):
+                                move_list.append(AssertPi(turn, rule, move.trace_point - 1,node))
+                                break
                     if (isinstance(move, AssertPi)):
                         player_internal_trace_point = turn.trace[move.trace_point]
                         rule = player_internal_trace_point[5]
@@ -479,13 +597,10 @@ class AssertBeliefType(MoveType):
                             for x in range(trace_point, 0, -1):
                                 if (belief in turn.trace[x][2]):
                                     new_move = AssertBelief(turn, AddBelief(belief), x, move.trace_point, node)
-                                    not_repeat = True
-                                    for node in store.node_list():
-                                        move1 = node.get_move()
-                                        if (move1 == new_move):
-                                            not_repeat = False
-                                            break
+                                    print(new_move)
+                                    not_repeat = self.not_repeat(store, new_move)
                                     if not_repeat:
+                                        print("not repeated")
                                         move_list.append(new_move)
                                     break
                             # if (isinstance(belief, RemoveBelief)):
@@ -505,14 +620,30 @@ class AssertBeliefType(MoveType):
                             if (isinstance(notbelief, AddBelief)):
                                 bel = notbelief.belief
                                 if (bel in turn.trace[x][3]):
-                                    move_list.append(AssertBelief(turn, RemoveBelief(bel), x, move.trace_point, node))
+                                    new_move = AssertBelief(turn, RemoveBelief(bel), x, move.trace_point, node)
+                                    not_repeat = self.not_repeat(store, new_move)
+                                    if not_repeat:
+                                        move_list.append(new_move)
                                     break
                             if (isinstance(notbelief, RemoveBelief)):
                                 bel = notbelief.belief
                                 if (bel in turn.trace[x][2]):
-                                    move_list.append(AssertBelief(turn, AddBelief(bel), x, move.upperbound, node))
+                                    new_move = AssertBelief(turn, AddBelief(bel), x, move.upperbound, node)
+                                    not_repeat = self.not_repeat(store, new_move)
+                                    if not_repeat:
+                                        move_list.append(new_move)
                                     break
         return move_list
+        
+    def not_repeat(self, store, new_move):
+        not_repeat = True
+        for node in store.node_list():
+            move1 = node.get_move()
+            if (move1.move_equals(new_move)):
+                if (move1.parent.get_move().move_equals(new_move.parent.get_move())):
+                    not_repeat = False
+                break
+        return not_repeat
         
 class AcceptBeliefType(MoveType):
     def legal(self, store, turn, actions):
@@ -556,8 +687,11 @@ class WhyBeliefType(MoveType):
             if (node.empty):
                 continue
             move = node.get_move()
+            print("why belief" + move.__repr__())
             if (not move.is_closed()):
+                print("a")
                 if (move.get_player() != turn):
+                    print("b")
                     if (isinstance(move, AssertBelief)):
                         bel_literal = move.belief
                         move_list.append(WhyBelief(turn, bel_literal, move.lowerbound, node))
@@ -575,13 +709,14 @@ class PerceptType(MoveType):
                     if (isinstance(move, WhyBelief)):
                         bel_literal = move.belief
                         trace_point = move.trace_point
+                        print(turn.trace[trace_point])
                         if (isinstance(turn.trace[trace_point][5], Perception)):
                             if (isinstance(bel_literal, AddBelief)):
-                                for belief in turn.trace[trace_point][0]:
+                                for belief in turn.trace[trace_point][2]:
                                     if (belief == bel_literal.belief):
                                         move_list.append(Percept(turn, bel_literal, trace_point, node))
                             if (isinstance(bel_literal, RemoveBelief)):
-                                for belief in turn.trace[trace_point][1]:
+                                for belief in turn.trace[trace_point][3]:
                                     if (belief == bel_literal.belief):
                                         move_list.append(Percept(turn, bel_literal, trace_point, node))
         return move_list
@@ -621,23 +756,38 @@ class Dialogue:
     
     def move(self):
         legal_moves = self.calculate_legal_moves();
+        if (len(legal_moves) == 0):
+            print("no legal moves for " + self.turn.name())
+            if (self.turn == self.responder):
+                self.turn = self.initiator
+            else:
+                self.turn = self.responder
+                
+            legal_moves = self.calculate_legal_moves()
+            
+            
         if (len(legal_moves) != 0):
             next_move = self.choose_next_move(legal_moves);
             next_move.perform()
             self.propagate_closure()
-            if (self.turn == self.initiator):
+            
+            next_turn = random.randint(0,1);
+            if (next_turn == 0):
                 self.turn = self.responder
             else:
                 self.turn = self.initiator
             print(next_move)
+        else:
+            self.can_continue = False
+            print("No Legal Moves")
 
     def calculate_legal_moves(self):
         legal_move_list = []
         for move_type in self.move_list:
             for move in move_type.legal(self.store, self.turn, self.actions):
                 legal_move_list.append(move)
-        if len(legal_move_list) == 0:
-            self.can_continue = False
+        # if len(legal_move_list) == 0:
+        #     self.can_continue = False
         return legal_move_list
     
     def choose_next_move(self, move_list):
