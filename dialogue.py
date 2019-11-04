@@ -29,8 +29,8 @@ class Move:
             self.parent.add_child(self)
             
     def move_equals(self, move):
-        print(self.player.name())
-        print(move.player.name())
+        # print(self.player.name())
+        # print(move.player.name())
         if (self.player.name() == move.player.name()):
             return True
         return False
@@ -808,7 +808,9 @@ class Dialogue:
                         public_trace_point = (trace_point // 3) # This should be the relevant point in the public trace
                         # print(public_trace_point)
                         if (len(self.public_trace[public_trace_point]) > 1): # Someone was expecting an action here.
+                            print("b")
                             if (len(self.public_trace[public_trace_point]) > 2): # Everyone was expecting an action here.
+                                print(self.public_trace[public_trace_point])
                                 robot_action_string = self.public_trace[public_trace_point][1].split(":")[1]
                                 human_action_string = self.public_trace[public_trace_point][2].split(":")[1]
                                 if (not robot_action_string == human_action_string):
@@ -822,6 +824,7 @@ class Dialogue:
                                 action_array = self.public_trace[public_trace_point][1].split(":")
                                 actor = action_array[0]
                                 action = action_array[1]
+                                # print("a")
                                 if (actor == "robot"):
                                     if (isinstance(move, WhyAction)):
                                         # print(move)

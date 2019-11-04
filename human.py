@@ -60,7 +60,7 @@ class HUMAN_KB:
                 add_beliefs.add(e.belief)
             if (isinstance(e, RemoveBelief)):
                 removed_beliefs.add(e.belief)
-            e.apply(self, public_trace)
+            # e.apply(self, public_trace)
 
         # Rule applied
         self.trace.append([set(self.beliefs),set(self.goals),set(add_beliefs),set(removed_beliefs),actions,Rule(set(),set(),set()),self.time])
