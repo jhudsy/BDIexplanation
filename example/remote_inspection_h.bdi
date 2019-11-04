@@ -1,0 +1,5 @@
+daily_inspection, barrels_scheduled -> .inspect_barrels
+daily_inspection, wall_scheduled -> .inspect_wall
+1: +wall_scheduled
+2: +barrels_scheduled
+3: + daily_inspection

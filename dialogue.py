@@ -29,7 +29,9 @@ class Move:
             self.parent.add_child(self)
             
     def move_equals(self, move):
-        if (self.player == move.player):
+        print(self.player.name())
+        print(move.player.name())
+        if (self.player.name() == move.player.name()):
             return True
         return False
         
@@ -184,7 +186,7 @@ class AssertPi(Move):
     def move_equals(self, move):
         if (isinstance(move, AssertPi)):
             if (super().move_equals(move)):
-                if self.pi == move.pi:
+                 if self.pi == move.pi:
                     if self.trace_point == move.trace_point:
                         return True
         return False
@@ -500,11 +502,14 @@ class AssertPiType(MoveType):
                                 if (node1.empty):
                                     continue
                                 move1 = node.get_move();
-                                if (move1 == potential_new_move):
+                                if (move1.move_equals(potential_new_move)):
+                                    legal_move = False
+                                    break
+                                if (move1.parent.get_move().move_equals(potential_new_move)):
                                     legal_move = False
                                     break
                             if (legal_move):
-                                move_list.append(potential_new_move)
+                                 move_list.append(potential_new_move)
         return move_list
         
 class NotInLibraryType(MoveType):
