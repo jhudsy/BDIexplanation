@@ -1,26 +1,21 @@
 
 from rules import *
 
-#  The human is going to inspect a trace and see if he/she agrees with it.
-class HUMAN_KB:
-    def __init__(self):
+# This is a Simple BDI Agent
+class KB:
+    def __init__(self, name):
         self.beliefs=set()
+        # Goals are not referred to in the paper
         self.goals=set()
+        
         self.rules=[]
         self.trace=[]
-        #c self.trace=self.modify(trace) #captures the beliefs,goals and rules applied at any point in time
-        self.time=0
 
-    # We take a robot trace and modify it by adding `perceptibles' (not yet implemented on robot side) and introducing a human error.
-    # def modify(self, trace):
-    #     model = []
-    #     for tick in trace:
-    #         tick.append(set()) # Facts perceptible at that time - this probably needs to be changed when we add perception.
-    #         tick.append(set()) # Facts the human perceived and the robot didn't
-    #         tick.append(set()) # Facts the robot perceived that weren't there.
-    #         model.append(tick)
+        self.time=0
+        self.agent_name = name
     
-    
+    # Don't really need to pass in trace point  here, its needed because of the method parameters AddBelief and RemoveBelief
+    # inherit from RuleEffect
     def percieve(self, belief_changes, trace_point):
         add_beliefs = set();
         removed_beliefs = set();
@@ -35,7 +30,7 @@ class HUMAN_KB:
         self.time += 1
 
     def tick(self, public_trace, public_actions):
-        """Does a clock tick in the Human represenation of the KB. NOT THE ENVIRONMENT!!!"""
+        """Does a clock tick in the Agent represenation of the KB. NOT THE ENVIRONMENT!!!"""
         rules=self.find_applicable_rules()
         #print(self.rules)
         #print(rules)
@@ -102,5 +97,5 @@ class HUMAN_KB:
         return "Beliefs: "+str(self.beliefs)+" Goals: "+str(self.goals)
         
     def name(self):
-        return "human"
+        return self.agent_name
   ##########################################
