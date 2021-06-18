@@ -5,7 +5,7 @@ style rules.
 Conditions are of the form
 belief1,...,beliefn
 where beliefs are strings.
-Effects are then +belief,-belief,+!goal,-!goal or .action
+Effects are then +belief,-belief, or .action
 where action is intended to have an effect on the world.
 
 Note that rules should typically take the form of
