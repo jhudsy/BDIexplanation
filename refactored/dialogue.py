@@ -1,4 +1,4 @@
-class Dialogue:
+class Dialogue1:
   def __init__(self):
     self.moves=[]
     self.open_moves=set()
