@@ -1,8 +1,9 @@
 ##########################################
 class RuleEffect:
     """The effects of a rule, subclassed by other classes below"""
-    def apply(self,kb):
+    def apply(self,kb,trace):
       pass
+      
 ##########################################
 
 class ExecuteAction(RuleEffect):
@@ -56,6 +57,9 @@ class RemoveBelief(RuleEffect):
 
     def __repr__(self):
       return "-"+self.belief
+      
+      
+# GOAL Based rules not mentioned in paper.
 ##########################################
 class AddGoal(RuleEffect):
     def __init__(self,goal):
