@@ -9,11 +9,21 @@ class TraceElement:
 
 from copy import deepcopy
 
-def find_applicable_plan(beliefs,plans): #returns first applicable plan to simulate priority
+"""Highly inefficient implementation, but finds all plans of top priority which are applicable and returns a random one of these"""
+def find_applicable_plan(beliefs,plans): 
+  gathered_plans=set()
+  gathered_priority=-1
   for p in plans:
     if p.beliefs.issubset(beliefs):
-      return p
-  return None
+      if p.priority>gathered_priority:  #we've found a higher priority plan, flush gathered plans
+         gathered_plans=set()
+         gathered_plans.add(p)
+         gathered_priority=p.priority
+      elif p.priorty=gathered_priority: #same priority, add plan
+         gathered_plans.add(p)
+  if len(gathered_plans)==0:
+    return None
+  return random.choice(gathered_plans)
 
 def do_perception(last_trace_element):
   if last_trace_element.state!="p":

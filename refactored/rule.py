@@ -24,9 +24,10 @@ class Event:
     self.effect=effects
 
 class Rule:
-  def __init__(self,beliefs,effects):
+  def __init__(self,beliefs,effects,priority):
     self.beliefs=beliefs
     self.effects=effects
+    self.priority=priority
   
   def executed_actions(self):
     return set(map(lambda x: x.parameter, filter(lambda x:x.__class__==ExecuteAction,self.effects)))
