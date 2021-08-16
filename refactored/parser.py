@@ -84,12 +84,12 @@ class RulesTransformer(Transformer):
 
 """time in event list is 3 times shorter than time here so we include extra Nones to take care of that"""
 def event_time_to_event_stack(events):
-  print(events)
+  #print(events)
   event_stack=[None]*(1+max(events)*3) #make event stack the length of the last event + 1 to include last perception event
   
   for i in range(len(event_stack)):
     if i%3==0 and events.get(i//3,None)!=None:
-      print(i,events[i//3],len(event_stack))
+      #print(i,events[i//3],len(event_stack))
       event_stack[i]=events[i//3]
 
   return event_stack
@@ -104,12 +104,12 @@ def parse_file(f):
     return parse_string(data)
 
 #test a simple string
-s="""tsm -(1)-> -tsm,+gal
-       st,as,gal -(1)-> +aw, -as, .m1
-       st,aw,gal -(2)-> +at,-aw,-gal,+gts,.m2
-       al,gts -(3)-> -gts,.d
-       0:+st
-       6:+as,+gal
-  """
+#s="""tsm -(1)-> -tsm,+gal
+#       st,as,gal -(1)-> +aw, -as, .m1
+#       st,aw,gal -(2)-> +at,-aw,-gal,+gts,.m2
+#       al,gts -(3)-> -gts,.d
+#       0:+st
+#       6:+as,+gal
+#  """
 
-print(parse_string(s))
+#print(parse_string(s))

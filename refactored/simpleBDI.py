@@ -19,7 +19,7 @@ def find_applicable_plan(beliefs,plans):
          gathered_plans=set()
          gathered_plans.add(p)
          gathered_priority=p.priority
-      elif p.priorty=gathered_priority: #same priority, add plan
+      elif p.priorty==gathered_priority: #same priority, add plan
          gathered_plans.add(p)
   if len(gathered_plans)==0:
     return None
