@@ -7,6 +7,15 @@ class TraceElement:
     self.action=action
     self.state=state
 
+  def __str__(self):
+    return f"""
+          beliefs: {list(b for b in self.beliefs)}
+          current_plan: {self.current_plan}
+          event_stack: {list(e for e in self.event_stack)}
+          action: {self.action}
+          state: {self.state}
+"""
+
 from copy import deepcopy
 
 """Highly inefficient implementation, but finds all plans of top priority which are applicable and returns a random one of these"""
@@ -26,17 +35,19 @@ def find_applicable_plan(beliefs,plans):
   return random.choice(gathered_plans)
 
 def do_perception(last_trace_element):
+  print("lte:",last_trace_element)
   if last_trace_element.state!="p":
     raise Exception("Incorrect state, expected p got",last_trace_element.state)
   
-  new_trace_element=copy.deepcopy(last_trace_element)
+  new_trace_element=deepcopy(last_trace_element)
   if len(new_trace_element.event_stack)==0:
     return None #end of execution
   
   current_event=new_trace_element.event_stack.pop()
-    
-  for e in current_event: #NB needs to be empty container for this to work
-    e.execute_effect(new_trace_element)
+
+  if current_event!=None:
+    for e in current_event.effect: #NB needs to be empty container for this to work
+      e.execute_effect(new_trace_element)
 
   new_trace_element.state="s"
   return new_trace_element
@@ -45,7 +56,7 @@ def do_selection(last_trace_element):
   if last_trace_element.state!="s":
     raise Exception("Incorrect state, expected s got",last_trace_element.state)
   
-  new_trace_element=copy.deepcopy(last_trace_element)
+  new_trace_element=deepcopy(last_trace_element)
   if len(new_trace_element.event_stack)==0:
     raise Exception("Unexpected empty stack")
   
@@ -60,7 +71,7 @@ def do_execution(last_trace_element):
   if last_trace_element.state!="s":
     raise Exception("Incorrect state, expected s got",last_trace_element.state)
   
-  new_trace_element=copy.deepcopy(last_trace_element)
+  new_trace_element=deepcopy(last_trace_element)
   if len(new_trace_element.event_stack)==0:
     raise Exception("Unexpected empty stack")
   

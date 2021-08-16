@@ -84,8 +84,7 @@ class RulesTransformer(Transformer):
 
 """time in event list is 3 times shorter than time here so we include extra Nones to take care of that"""
 def event_time_to_event_stack(events):
-  #print(events)
-  event_stack=[None]*(1+max(events)*3) #make event stack the length of the last event + 1 to include last perception event
+  event_stack=[None]*(4+max(events)*3) #make event stack the length of the last event + 4 to include an extra cycle of action and last perception event
   
   for i in range(len(event_stack)):
     if i%3==0 and events.get(i//3,None)!=None:
