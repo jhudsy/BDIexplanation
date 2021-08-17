@@ -94,21 +94,12 @@ def event_time_to_event_stack(events):
   return event_stack
 
 def parse_string(string):
+  """parses a string. N.B., adds a null plan of the form []-(0)->[]"""
   (plans,events)=RulesTransformer().transform(parser.parse(string))
+  plans.append(Rule(set(),set(),0))
   return (plans,event_time_to_event_stack(events))
 
 def parse_file(f):
   with open(filename,'r') as myfile:
     data=myfile.read()
     return parse_string(data)
-
-#test a simple string
-#s="""tsm -(1)-> -tsm,+gal
-#       st,as,gal -(1)-> +aw, -as, .m1
-#       st,aw,gal -(2)-> +at,-aw,-gal,+gts,.m2
-#       al,gts -(3)-> -gts,.d
-#       0:+st
-#       6:+as,+gal
-#  """
-
-#print(parse_string(s))
