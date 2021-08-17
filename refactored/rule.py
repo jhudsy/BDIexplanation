@@ -23,7 +23,7 @@ class ExecuteAction(Effect):
   def __str__(self):
     return f".{self.parameter}"
   def execute_effect(self,trace_element):
-    trace_element.action=trace_element
+    trace_element.action=self.parameter
 
 class Event:
   def __init__(self,time,effects):
@@ -31,7 +31,8 @@ class Event:
     self.effect=effects
 
   def __str__(self):
-    return f"{self.time}:{list(str(e) for e in self.effect)}"
+    #return f"{self.time}:{list(str(e) for e in self.effect)}"
+    return f"{list(str(e) for e in self.effect)}"
 
 class Rule:
   def __init__(self,beliefs,effects,priority):
