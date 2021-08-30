@@ -1,129 +1,319 @@
+from dialogue import Dialogue
+from participant import Participant
+from copy import deepcopy
+from rule import AddBelief,RemBelief
+
 class Move:
-  def __init__(self,parent,player):
-    self.closed=False
-    self.parent=parent
-    self.player=player
-  
-  def is_valid(self,me,op,constraints):
-    """Me, op, constraints are traces - arrays of trace elements."""
-    pass
-  
-  def check_closure(self):
-    pass
 
-  def effect(self,me,op,constraints):
-    """N.B., me,op,constraints are traces but represent the me,op and constraints of the other player. That is me is the other player, op is myself and constraints are constraints on op (i.e., me). This is in contrast to check valid."""
-             pass
+    def __init__(self, player, in_response_to):
+        """player is the player making the move. responds_to is the move being responded to. closed is whether the
+        move is closed. """
+        self.player = player
+        self.responds_to = in_response_to
+        self.closed = False
 
-class WhyAction(Move):
-  def __init__(self,action,time):
-    self.action=action
-    self.time=time
+    def try_close(self, dialogue):
+        """by default a move is closed if it is already closed or there is a response to it. The only exception is
+        why_plan(plan,time). We will overload this method there"""
+        if self.closed:
+            return True
+        for m in dialogue:
+            if m.responds_to == self:
+                self.closed = True
+                return True
+        return False
 
-  def is_valid(self,me,op,constraints):
-    return me[self.time].stage=="e"
-  
-  def check_closure(self,dialogue):
-    for d in dialogue:
-      if d==Didnt(action,time) or (d.__class__=="Assert" and
-                                   d.time=self.time-1 and
-                                   ExecuteAction(self.action) in d.plan)
-        return True
-    return False
+    def find_legal_moves(self, dialogue:Dialogue):
+        """This returns a collection of legal responses to the current move, based on what is contained in the
+        current dialogue. """
+        pass
 
+    def update_knowledge_base(self, other:Participant):
+        """updates the current player (or typically the other player's) knowledge base given that the move was
+        actually made"""
+        pass
+###############################################################################################################
 class WhyNotAction(Move):
-  def __init__(self,action,time):
+  def __init__(self,action,time,player):
+    super().__init__(player,None)
     self.action=action
     self.time=time
-  
-  def is_valid(self,me,op,constraints):
-    return me[self.time].stage=="e"
-  
-  def check_closure(self,dialogue):
-    for d in dialogue:
-      if d==Did(action,time) or d==Why(action,time):
-        return True
-    return False
 
-class WhyPlan(Move):
-  def __init__(self,plan,time):
-    self.plan=plan
-    self.time=time
+  def __str__(self):
+    return f"{self.player}:Why was action {self.action} not executed at time {self.time}?"
 
-  def is_valid(self,me,op,constraints):
-    return op[self.time].plan==plan #possible bug in paper regarding not checking phase? 
-  
-  def check_closure(self,dialogue):
-    beliefs=set(self.plan.beliefs)
-    for d in dialogue:
-      if d.__class__=="Assert" and d.end_time==self.time-1:
-        beliefs.remove(d.belief)
-    return len(beliefs)==0
+  def find_legal_moves(self, dialogue:Dialogue):
+    legal_moves=[]
+    to_move=dialogue.get_other_player(self.player)
+    legal_moves.append(WhyAction(self.action,self.time,to_move,self))
+    if self.player.trace[self.time].action==self.action:
+      legal_moves.append(DidAction(self.action,self.time,to_move,self))
+    return legal_moves
 
-class WhyBelief(Move):
-  def __init__(self,belief,time):
-    self.belief=belief
-    self.time=time
-  
-  def is_valid(self,me,op,constraints):
-    return self.belief in op[self.time].beliefs
-  
-  def check_closure(self,dialogue):
-    for d in dialogue:
-      if d==Percept(AddBelief(self.belief),self.time):
-        return True
-      if d.__class__=AssertPlan and d.time=self.time-1 and AddBelief(self.belief) in d.plan.effects:
-        return True
-    return False
+###############################################################################################################
+class WhyAction(Move):
+  def __init__(self, action, time, player, responds_to):
+    super().__init__(player, responds_to)
+    self.action = action
+    self.time = time
 
-class WhyNotBelief(Move):
-  def __init__(self,belief,time):
-    self.belief=belief
-    self.time=time
-  
-  def is_valid(self,me,op,constraints):
-    return not(self.belief in op[self.time].beliefs)
-  
-  def check_closure(self,dialogue):
-    for d in dialogue:
-      if d==Percept(RemBelief(self.belief),self.time):
-        return True
-      if d.__class__=AssertPlan and d.time=self.time-1 and RemBelief(self.belief) in d.plan.effects:
-        return True
-    return False
+  def __str__(self):
+    return f"{self.player}:Why was action {self.action} executed at time {self.time}?"
 
+  def find_legal_moves(self, dialogue:Dialogue):
+    legal_moves=[]
+    to_move=dialogue.get_other_player(self.player)
+    if to_move.trace[self.time].action!=self.action:
+      legal_moves.append(DidntAction(self.action,self.time,to_move,self))
+    legal_moves.append(AssertPlan(to_move.trace[self.time-1].current_plan,self.time-1,to_move,self))
+    return legal_moves
+###############################################################################################################
+class DidAction(Move):
+  def __init__(self,action,time,player,responds_to):
+    super().__init__(player, responds_to)
+    self.action = action
+    self.time = time
+    self.closed = True
+
+  def __str__(self):
+      return f"{self.player}: Action {self.action} was executed at time {self.time}"
+
+  def find_legal_moves(self, dialogue:Dialogue):
+      return []
+
+  def update_knowledge_base(self, other:Participant):
+      other.other[self.time].action=self.action
+###############################################################################################################
+class DidntAction(Move):
+  def __init__(self,action,time,player,responds_to):
+    super().__init__(player, responds_to)
+    self.action = action
+    self.time = time
+    self.closed = True
+
+  def __str__(self):
+      return f"{self.player}: Action {self.action} was not executed at time {self.time}"
+
+  def find_legal_moves(self, dialogue:Dialogue):
+      return []
+
+  def update_knowledge_base(self, other:Participant):
+      other.other_constraints_trace[self.time].action=self.action
+###############################################################################################################
 class AssertPlan(Move):
-  def __init__(self,plan,time):
+  def __init__(self,plan,time,player,responds_to):
+    super().__init__(player, responds_to)
+    self.plan = plan
+    self.time = time
+
+  def __str__(self):
+    return f"{self.player}:Plan {self.plan} was executed at time {self.time}"
+
+  def find_legal_moves(self, dialogue:Dialogue):
+    legal_moves=[]
+    to_move=dialogue.get_other_player(self.player)
+    #legal moves are why plan, assert another plan, accept plan, not in library, or precedence.
+    #why plan:
+    legal_moves.append(WhyPlan(self.plan,self.time,to_move,self))
+    # assert another plan if that happened at the same time
+    if to_move.trace[self.time].current_plan!=self.plan:
+      legal_moves.append(AssertPlan(to_move.trace[self.time].current_plan, self.time, to_move, self))
+    elif to_move.trace[self.time].current_plan != self.plan:
+      legal_moves.append(AcceptPlan(self.plan, self.time, to_move, self))
+    if self.plan not in to_move[self.time].plans:
+      legal_moves.append(NotInLibrary(self.plan, to_move, self))
+    # Precedence is trickier, need to check for a parent assert (which we respond to).
+    if self.responds_to.__class__.__name__ == "Assert_Plan" and self.responds_to.plan.priority <= self.plan.priority:
+      legal_moves.append(Precedence(self.plan, self.responds_to.plan,to_move,self))
+    return legal_moves
+
+  def update_knowledge_base(self, other:Participant):
+    other.other[self.time].current_plan=self.plan
+    if self.responds_to.__class__==AssertPlan:
+      other.other_constraints_trace[self.time].current_plan=self.responds_to.current_plan
+###############################################################################################################
+class AcceptPlan(Move):
+  def __init__(self,plan,time,player,responds_to):
+    super().__init__(player,responds_to)
     self.plan=plan
     self.time=time
-  
-  def is_valid(self,me,op,constraints):
-    if not me[self.time].stage=="s":
-      return False
-    if not me[self.time].current_plan==self.plan:
-      return False
+    self.closed=True
 
-    #now check whether following a whyAction, whyBelief or whyNotBelief
-    
-    for m in dialogue.moves:
-      if not m.closed and m.__class__==WhyAction and m.action in self.plan.executed_actions():
-        return True
-      if not m.closed and m.__class__==WhyBelief and m.belief in self.plan.added_beliefs():
-        return True
-      if not m.closed and m.__class__==WhyNotBelief and m.belief in self.plan.removed_beliefs():
-        return True
+  def __str__(self):
+    return f"{self.player}: accepts that plan {self.plan} was executed at time {self.time}"
+
+  def find_legal_moves(self,dialogue):
+    return []
+
+  def update_knowledge_base(self,other):
+    other.other[self.time].current_plan=self.plan
+###############################################################################################################
+class NotInLibrary(Move):
+  def __init__(self,plan,player,responds_to):
+    super().__init__(player,responds_to)
+    self.plan=plan
+    self.closed=True
+
+  def __str__(self):
+    return f"{self.player}: plan {self.plan} is not in the plan library"
+
+  def find_legal_moves(self,dialogue):
+    return []
+
+  def update_knowledge_base(self,other):
+    other.other_constraints_plans().append(self.plan)
+###############################################################################################################
+class Precedence(Move):
+  def __init__(self,plan,lower_prec_plan,player,responds_to):
+    super().__init__(player,responds_to)
+    self.plan=plan
+    self.lower_prec_plan=lower_prec_plan
+    self.closed=True
+
+  def __str__(self):
+    return f"{self.player}: plan {self.plan} has equal or higher precendence to plan {self.lower_prec_plan}"
+
+  def find_legal_moves(self,dialogue):
+    return []
+
+  def update_knowledge_base(self,other):
+    other.other_constraints_priorities.add(self.plan,self.lower_prec_plan)
+###############################################################################################################
+class WhyPlan(Move):
+  def __init__(self,plan,time,player,responds_to):
+    super().__init__(player,responds_to)
+    self.plan=plan
+    self.time=time
+
+  def __str__(self):
+    return f"{self.player}: Why was plan {self.plan} executed at time {self.time}?"
+
+  def try_close(self,dialogue):
+    bel = deepcopy(self.plan.beliefs)
+    for m in dialogue:
+      if m.__class__ == AssertBelief and m.time == self.time - 1:
+        bel.remove(m.belief)
+    if len(bel) == 0:
+      self.closed = True
+      return True
     return False
-  
-  def check_closure(self,dialogue):
-    for d in dialogue:
-      if d==WhyPlan(self.plan,self.time) or (d.__class__==AssertPlan and d.time==self.time) or d==AcceptPlan(self.plan,self.time) or d==NotInLibrary(self.plan) or (d.__class__==Precedence and d.plan==self.plan):
-        return True
-    return False
-  
-  def effect(self,me,op,constraints):
-    op[self.time].plan=self.plan
-    for d in dialogue:
-      if d.__class__==AssertPlan and d.time==self.time:
-        constraints[self.time]=self.plan
 
+  #the legal moves are assertions about beliefs held by the other participant at time t-1 that are in this plan. We could just look at plan beleifs.
+  #We prefilter things here based on the other player beliefs to reduce number of choices.
+  def find_legal_moves(self, dialogue:Dialogue):
+    legal_moves=[]
+    to_move=dialogue.get_other_player(self.player)
+    beliefs=to_move[self.time].beliefs
+    for b in self.plan.beliefs:
+      if b in beliefs:
+        for i in range(self.time - 1, 0, -1):
+          if b not in to_move.trace[i].beliefs:
+            legal_moves.append(AssertBelief(b, i + 1, self.time - 1, to_move, self))
+        return legal_moves
+###############################################################################################################
+class AssertBelief(Move):
+  def __init__(self, belief, start_time, end_time, player, responds_to):
+    super().__init__(player, responds_to)
+    self.belief = belief
+    self.start = start_time
+    self.end = end_time
 
+  def __str__(self):
+    return f"{self.player}: asserts that belief {self.belief} held from time {self.start} until at least {self.end}"
+
+  def find_legal_moves(self, dialogue):
+    """we can ask why the belief held, or assert that the belief did not hold at some intermediate timepoint. For the latter, we consider the time interval in which the belief did not hold (according to the utterer)."""
+    legal_moves = []
+    to_move=dialogue.get_other_player(self.player)
+    for i in range(self.start,self.end+1):
+      legal_moves.append(WhyBelief(self.belief,i,to_move,self))
+
+    if self.belief not in to_move[self.end].beliefs:
+      for i in range(self.end,0,-1):
+        if self.belief in to_move[i].beliefs:
+          legal_moves.append(AssertNotBelief(i,self.end,to_move,self))
+          break
+
+    found_belief=True
+    for i in range(self.start,self.end+1):
+      if self.belief not in  to_move[i].beliefs:
+        found_belief=False
+    if found_belief:
+      legal_moves.append(AcceptBelief(self.start,self.end,to_move,self))
+    return legal_moves
+
+  def update_knowledge_base(self, other:Participant):
+    for i in range(self.start,self.end+1):
+      other.other[i].beliefs.add(self.belief)
+###############################################################################################################
+class AssertNotBelief(Move):
+  def __init__(self,belief,start_time,end_time,player,responds_to):
+    super().__init__(player,responds_to)
+    self.belief=belief
+    self.start=start_time
+    self.end=end_time
+
+  def __str__(self):
+    return f"{self.player}: asserts that belief {self.belief} does not hold between times {self.start} and {self.end}"
+
+  def find_legal_moves(self,dialogue):
+    """legal responses are accept and why"""
+    legal_moves=[]
+    to_move=dialogue.get_other_player(self.player)
+    #why is asked about the start time of the belief
+    legal_moves.append(WhyNotBelief(self.belief,self.start,to_move,self))
+    accept_not_belief=True
+    for i in range(self.start,self.end+1):
+      if self.belief in to_move.trace[i].beliefs:
+        accept_not_belief=False
+        break
+    if accept_not_belief:
+      legal_moves.append(AcceptNotBelief(self.belief,self.start,self.end,to_move,self))
+
+  def update_knowledge_base(self,other:Participant):
+    for i in range(self.start,self.end+1):
+      other.other_constraints_trace[i].beliefs.add(self.belief)
+###############################################################################################################
+class WhyBelief(Move):
+  def __init__(self,belief,time,player,responds_to):
+      super().__init__(player,responds_to)
+      self.belief=belief
+      self.time=time
+
+  def __str__(self):
+    return f"{self.player} asks why belief {self.belief} holds at time {self.time}?"
+
+  def find_legal_moves(self,dialogue):
+      """legal responses are assert plan at time t-1 and percept"""
+      legal_moves=[]
+      to_move=dialogue.get_other_player(self.player)
+      if AddBelief(self.belief) in to_move.trace[self.time-1].current_plan:
+        legal_moves.append(AssertPlan(to_move.trace[self.time-1].current_plan,self.time-1,to_move,self))
+      if AddBelief(self.belief) in to_move.trace[self.time-1].event_stack[0]: #TODO: Check time
+        legal_moves.append(PerceptAddBelief(self.belief,self.time,to_move,self))
+      return legal_moves #NB. what if legal moves are empty?
+###############################################################################################################
+class WhyNotBelief(Move):
+  def __init__(self,belief,time,player,responds_to):
+      super().__init__(player,responds_to)
+      self.belief=belief
+      self.time=time
+
+  def __str__(self):
+    return f"{self.player} asks why belief {self.belief} holds at time {self.time}?"
+
+  def find_legal_moves(self,dialogue):
+      """legal responses are assert plan at time t-1 and percept"""
+      legal_moves=[]
+      to_move=dialogue.get_other_player(self.player)
+      if RemBelief(self.belief) in to_move.trace[self.time-1].current_plan:
+        legal_moves.append(AssertPlan(to_move.trace[self.time-1].current_plan,self.time-1,to_move,self))
+      if RemBelief(self.belief) in to_move.trace[self.time-1].event_stack[0]: #TODO: Check time
+        legal_moves.append(PerceptRemoveBelief(self.belief,self.time,to_move,self))
+      return legal_moves #NB. what if legal moves are empty?
+###############################################################################################################
+
+class AcceptBelief(Move):
+class AcceptNotBelief(Move):
+class PerceptAddBelief(Move):
+class PerceptRemoveBelief(Move):

@@ -6,6 +6,9 @@ class Effect:
   def __init__(self,param):
     self.parameter=param
 
+  def __eq__(self,other):
+    return self.__class__==other.__class__ and self.parameter==other.parameter
+
 class AddBelief(Effect):
   def __str__(self):
     return f"+{self.parameter}"
@@ -51,4 +54,9 @@ class Rule:
   
   def removed_beliefs(self):
     return set(map(lambda x: x.parameter, filter(lambda x:x.__class__==RemBelief,self.effects)))
+
+  def __eq__(self,other):
+    if other.__class__!=self.__class__:
+      return False
+    return self.beliefs == other.beliefs and self.effects == other.effects and self.priority == other.priority
 
