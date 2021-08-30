@@ -1,0 +1,6 @@
+On the robot's daily inspection it should inspent the barrels if they are scheduled for inspection.
+
+On the robot's daily inspection it should inspent the walls if they are scheduled for inspection.
+
+If both are scheduled for inspection then inspecting the barrels takes precedence.
+
