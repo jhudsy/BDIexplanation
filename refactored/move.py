@@ -350,31 +350,36 @@ class AcceptBelief(Move):
         self.end_time = end_time
 
     def __str__(self):
-      return f"{self.player} accepts that belief {self.belief} holds between {self.start_time} and {self.end_time}"
+        return f"{self.player} accepts that belief {self.belief} holds between {self.start_time} and {self.end_time}"
 
     def find_legal_moves(self, dialogue: Dialogue):
-      return []
+        return []
 
     def update_knowledge_base(self, other: Participant):
-      for i in range(self.start_time,self.end_time+1):
-        other.other[i].beliefs.add(self.belief)
+        for i in range(self.start_time, self.end_time + 1):
+            other.other[i].beliefs.add(self.belief)
+
+
 ###############################################################################################################
 class AcceptNotBelief(Move):
-  def __init__(self, belief, start_time, end_time, player, responds_to):
-    super().__init__(player, responds_to)
-    self.belief = belief
-    self.start_time = start_time
-    self.end_time = end_time
+    def __init__(self, belief, start_time, end_time, player, responds_to):
+        super().__init__(player, responds_to)
+        self.belief = belief
+        self.start_time = start_time
+        self.end_time = end_time
 
-  def __str__(self):
-    return f"{self.player} accepts that belief {self.belief} does not hold between {self.start_time} and {self.end_time}"
+    def __str__(self):
+        return f"{self.player} accepts that belief {self.belief} does not hold between {self.start_time} and " \
+               f"{self.end_time}"
 
-  def find_legal_moves(self, dialogue: Dialogue):
-    return []
+    def find_legal_moves(self, dialogue: Dialogue):
+        return []
 
-  def update_knowledge_base(self, other: Participant):
-    for i in range(self.start_time, self.end_time + 1):
-      other.other_constraints_trace[i].beliefs.add(self.belief)
+    def update_knowledge_base(self, other: Participant):
+        for i in range(self.start_time, self.end_time + 1):
+            other.other_constraints_trace[i].beliefs.add(self.belief)
+
+
 ###############################################################################################################
 class PerceptAddBelief(Move):
     def __init__(self, belief, time, player, responds_to):
@@ -383,13 +388,15 @@ class PerceptAddBelief(Move):
         self.time = time
 
     def __str__(self):
-      return f"{self.player} percieved the addition of {self.belief} at time {self.time}"
+        return f"{self.player} percieved the addition of {self.belief} at time {self.time}"
 
     def find_legal_moves(self, dialogue: Dialogue):
-      return []
+        return []
 
     def update_knowledge_base(self, other: Participant):
-      other.other[self.time].event_stack[0].add(AddBelief(self.belief))
+        other.other[self.time].event_stack[0].add(AddBelief(self.belief))
+
+
 ###############################################################################################################
 
 class PerceptRemoveBelief(Move):
@@ -399,10 +406,10 @@ class PerceptRemoveBelief(Move):
         self.time = time
 
     def __str__(self):
-      return f"{self.player} percieved the removal of {self.belief} at time {self.time}"
+        return f"{self.player} percieved the removal of {self.belief} at time {self.time}"
 
     def find_legal_moves(self, dialogue: Dialogue):
-      return []
+        return []
 
     def update_knowledge_base(self, other: Participant):
-      other.other[self.time].event_stack[0].add(RemBelief(self.belief))
+        other.other[self.time].event_stack[0].add(RemBelief(self.belief))
