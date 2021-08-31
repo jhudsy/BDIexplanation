@@ -1,4 +1,6 @@
 from participant import Participant
+from copy import deepcopy
+from rule import AddBelief, RemBelief
 
 class Dialogue:
     p1: Participant
@@ -26,14 +28,11 @@ class Dialogue:
         lm = []
         for m in self.moves:
             if not m.closed:
-                lm.append(m.find_legal_moves(self))
+                lm+=m.find_legal_moves(self)
         return lm
 
-from dialogue import Dialogue
-from participant import Participant
-from copy import deepcopy
-from rule import AddBelief, RemBelief
 
+###############################################################################################################
 class Move:
 
     def __init__(self, player, in_response_to):
@@ -48,7 +47,7 @@ class Move:
         why_plan(plan,time). We will overload this method there"""
         if self.closed:
             return True
-        for m in dialogue:
+        for m in dialogue.moves:
             if m.responds_to == self:
                 self.closed = True
                 return True
@@ -160,7 +159,7 @@ class AssertPlan(Move):
             legal_moves.append(AssertPlan(to_move.trace[self.time].current_plan, self.time, to_move, self))
         elif to_move.trace[self.time].current_plan != self.plan:
             legal_moves.append(AcceptPlan(self.plan, self.time, to_move, self))
-        if self.plan not in to_move[self.time].plans:
+        if self.plan not in to_move.trace[self.time].plans:
             legal_moves.append(NotInLibrary(self.plan, to_move, self))
         # Precedence is trickier, need to check for a parent assert (which we respond to).
         if self.responds_to.__class__ == AssertPlan and self.responds_to.plan.priority <= self.plan.priority:
@@ -238,8 +237,8 @@ class WhyPlan(Move):
 
     def try_close(self, dialogue):
         bel = deepcopy(self.plan.beliefs)
-        for m in dialogue:
-            if m.__class__ == AssertBelief and m.time == self.time - 1:
+        for m in dialogue.moves:
+            if m.__class__ == AssertBelief and m.end == self.time - 1:
                 bel.remove(m.belief)
         if len(bel) == 0:
             self.closed = True
@@ -250,15 +249,20 @@ class WhyPlan(Move):
     # We could just look at plan beleifs.
     # We prefilter things here based on the other player beliefs to reduce number of choices.
     def find_legal_moves(self, dialogue: Dialogue):
+        beliefs_to_prove=self.plan.beliefs
+        for m in dialogue.moves:
+            if m.__class__==AssertBelief and m.end==self.time-1 and m.belief in beliefs_to_prove:
+                beliefs_to_prove=beliefs_to_prove-set([m.belief])
+
         legal_moves = []
         to_move = dialogue.get_other_player(self.player)
-        beliefs = to_move[self.time].beliefs
-        for b in self.plan.beliefs:
+        beliefs = to_move.trace[self.time-1].beliefs
+        for b in beliefs_to_prove:
             if b in beliefs:
-                for i in range(self.time - 1, 0, -1):
-                    if b not in to_move.trace[i].beliefs:
+                for i in range(self.time , -1, -1):
+                    if b not in to_move.trace[i].beliefs or i==-1: #problem is we get to 0 as we believed this from beginning
                         legal_moves.append(AssertBelief(b, i + 1, self.time - 1, to_move, self))
-                return legal_moves
+        return legal_moves
 
 
 ###############################################################################################################
@@ -280,15 +284,15 @@ class AssertBelief(Move):
         for i in range(self.start, self.end + 1):
             legal_moves.append(WhyBelief(self.belief, i, to_move, self))
 
-        if self.belief not in to_move[self.end].beliefs:
+        if self.belief not in to_move.trace[self.end].beliefs:
             for i in range(self.end, 0, -1):
-                if self.belief in to_move[i].beliefs:
+                if self.belief in to_move.trace[i].beliefs:
                     legal_moves.append(AssertNotBelief(self.belief, i, self.end, to_move, self))
                     break
 
         found_belief = True
         for i in range(self.start, self.end + 1):
-            if self.belief not in to_move[i].beliefs:
+            if self.belief not in to_move.trace[i].beliefs:
                 found_belief = False
         if found_belief:
             legal_moves.append(AcceptBelief(self.belief, self.start, self.end, to_move, self))
