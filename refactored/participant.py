@@ -1,6 +1,7 @@
 from copy import deepcopy
 from simpleBDI import TraceElement
 
+
 class Participant:
     """A participant consists of their own trace, the other's trace and a set of (negative) constraints they have on
     the other, both on their trace and on priorities between plans. We assume that the plan library is static and can
@@ -10,7 +11,8 @@ class Participant:
     belief for the other.
   """
 
-    trace:list[TraceElement]
+    #trace: list[TraceElement]
+
     def __init__(self, trace):
         self.trace = trace
 
@@ -34,3 +36,7 @@ class Participant:
 
     def other_constraints_plans(self):
         return self.other_constraints_trace.plans
+
+    def find_inconsistencies(self):
+        """returns any inconsistency(ies) detected between self.trace, self.other/self.other_constraints"""
+        pass

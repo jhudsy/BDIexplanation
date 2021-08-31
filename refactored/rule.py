@@ -9,6 +9,9 @@ class Effect:
   def __eq__(self,other):
     return self.__class__==other.__class__ and self.parameter==other.parameter
 
+  def __hash__(self):
+    return hash(hash(self.parameter)+hash(self.__class__.__name__))
+
 class AddBelief(Effect):
   def __str__(self):
     return f"+{self.parameter}"
@@ -60,3 +63,8 @@ class Rule:
       return False
     return self.beliefs == other.beliefs and self.effects == other.effects and self.priority == other.priority
 
+  def __hash__(self):
+    h=sum(map(lambda x: hash(x),self.beliefs))
+    h+=sum(map(lambda x: hash(x),self.effects))
+    h+=self.priority
+    return h
