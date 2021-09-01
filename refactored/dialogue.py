@@ -72,7 +72,7 @@ class WhyNotAction(Move):
         self.time = time
 
     def __str__(self):
-        return f"{self.player}:Why was action {self.action} not executed at time {self.time}?"
+        return f"{self.player}:Why was action {self.action} not observed at time {self.time}?"
 
     def find_legal_moves(self, dialogue: Dialogue):
         legal_moves = []
@@ -91,7 +91,7 @@ class WhyAction(Move):
         self.time = time
 
     def __str__(self):
-        return f"{self.player}:Why was action {self.action} executed at time {self.time}?"
+        return f"{self.player}:Why was action {self.action} observed at time {self.time}?"
 
     def find_legal_moves(self, dialogue: Dialogue):
         legal_moves = []
@@ -111,7 +111,7 @@ class DidAction(Move):
         self.closed = True
 
     def __str__(self):
-        return f"{self.player}: Action {self.action} was executed at time {self.time}"
+        return f"{self.player}: Action {self.action} was observed at time {self.time}"
 
     def find_legal_moves(self, dialogue: Dialogue):
         return []
@@ -129,7 +129,7 @@ class DidntAction(Move):
         self.closed = True
 
     def __str__(self):
-        return f"{self.player}: Action {self.action} was not executed at time {self.time}"
+        return f"{self.player}: Action {self.action} was not observed at time {self.time}"
 
     def find_legal_moves(self, dialogue: Dialogue):
         return []
@@ -347,9 +347,9 @@ class WhyBelief(Move):
         """legal responses are assert plan at time t-1 and percept"""
         legal_moves = []
         to_move = dialogue.get_other_player(self.player)
-        if AddBelief(self.belief) in to_move.trace[self.time - 1].current_plan:
+        if to_move.trace[self.time-1].current_plan!=None and AddBelief(self.belief) in to_move.trace[self.time - 1].current_plan:
             legal_moves.append(AssertPlan(to_move.trace[self.time - 1].current_plan, self.time - 1, to_move, self))
-        if AddBelief(self.belief) in to_move.trace[self.time - 1].event_stack[0]:  # TODO: Check time
+        if AddBelief(self.belief) in to_move.trace[self.time - 1].event_stack[0].effect:  # TODO: Check time
             legal_moves.append(PerceptAddBelief(self.belief, self.time, to_move, self))
         return legal_moves  # NB. what if legal moves are empty?
 
