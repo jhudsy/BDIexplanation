@@ -347,7 +347,7 @@ class WhyBelief(Move):
         """legal responses are assert plan at time t-1 and percept"""
         legal_moves = []
         to_move = dialogue.get_other_player(self.player)
-        if to_move.trace[self.time-1].current_plan!=None and AddBelief(self.belief) in to_move.trace[self.time - 1].current_plan:
+        if to_move.trace[self.time-1].current_plan!=None and AddBelief(self.belief) in to_move.trace[self.time - 1].current_plan.effects:
             legal_moves.append(AssertPlan(to_move.trace[self.time - 1].current_plan, self.time - 1, to_move, self))
         if AddBelief(self.belief) in to_move.trace[self.time - 1].event_stack[0].effect:  # TODO: Check time
             legal_moves.append(PerceptAddBelief(self.belief, self.time, to_move, self))

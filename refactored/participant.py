@@ -13,8 +13,9 @@ class Participant:
 
     #trace: list[TraceElement]
 
-    def __init__(self, trace):
+    def __init__(self, trace,name=None):
         self.trace = trace
+        self.name=name
 
         self.other = deepcopy(trace)
         for i in range(len(trace)):
@@ -40,3 +41,6 @@ class Participant:
     def find_inconsistencies(self):
         """returns any inconsistency(ies) detected between self.trace, self.other/self.other_constraints"""
         pass
+
+    def __str__(self):
+         return self.name
