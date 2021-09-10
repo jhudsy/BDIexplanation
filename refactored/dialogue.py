@@ -262,6 +262,7 @@ class WhyPlan(Move):
                 for i in range(self.time , -1, -1):
                     if b not in to_move.trace[i].beliefs or i==-1: #problem is we get to 0 as we believed this from beginning
                         legal_moves.append(AssertBelief(b, i + 1, self.time - 1, to_move, self))
+                        break
         return legal_moves
 
 
