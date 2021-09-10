@@ -92,7 +92,6 @@ def event_time_to_event_stack(events,**kwargs):
 
     for i in range(len(event_stack)):
         if i % 3 == 0 and events.get(i // 3, None) is not None:
-            # print(i,events[i//3],len(event_stack))
             event_stack[i] = events[i // 3]
 
     return event_stack

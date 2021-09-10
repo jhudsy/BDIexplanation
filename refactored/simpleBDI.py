@@ -88,7 +88,7 @@ def do_execution(last_trace_element):
 
 #initial_state should be (set(),plans,None,event_stack,none,"p")
 def create_trace(initial_state):
-  """Takes in a single TraceElement and then runs the semantics to create a trace. If calling from parse_stringe, invoke using create_trace(TraceElement(set(),p[0],None,p[1],None,"p")) """
+  """Takes in a single TraceElement and then runs the semantics to create a trace. If calling from parse_string, invoke using create_trace(TraceElement(set(),p[0],None,p[1],None,"p")) """
   trace=[initial_state]
   while True:
     trace.append(do_perception(trace[-1]))
