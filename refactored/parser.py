@@ -83,12 +83,11 @@ class RulesTransformer(Transformer):
         return str(args)
 
 
-"""time in event list is 3 times shorter than time here so we include extra Nones to take care of that"""
 
-
-def event_time_to_event_stack(events):
-    event_stack = [None] * (4 + max(
-        events) * 3)  # make event stack the length of the last event + 4 to include an extra cycle of action and
+def event_time_to_event_stack(events,**kwargs):
+    """time in event list is 3 times shorter than time here so we include extra Nones to take care of that. Alternatively, the timesteps parameter can be used to explicitly set the trace length"""
+    timesteps=kwargs.get("timesteps",4+max(events)*3)
+    event_stack = [None] * timesteps # make event stack the length of the last event + 4 to include an extra cycle of action and
     # last perception event
 
     for i in range(len(event_stack)):
@@ -99,14 +98,14 @@ def event_time_to_event_stack(events):
     return event_stack
 
 
-def parse_string(string):
+def parse_string(string,**kwargs):
     """parses a string. N.B., adds a null plan of the form []-(0)->[]"""
     (plans, events) = RulesTransformer().transform(parser.parse(string))
     plans.append(Rule(set(), set(), 0))
-    return (plans, event_time_to_event_stack(events))
+    return (plans, event_time_to_event_stack(events,**kwargs))
 
 
-def parse_file(filename):
+def parse_file(filename,**kwargs):
     with open(filename, 'r') as myfile:
         data = myfile.read()
-        return parse_string(data)
+        return parse_string(data,**kwargs)
