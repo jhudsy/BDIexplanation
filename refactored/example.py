@@ -17,13 +17,13 @@ ruleset="""
  24:+hungry
 """
 p=parse_string(ruleset,timesteps=31)
-print(p[1])
 
 trace=create_trace(TraceElement(set(),p[0],None,p[1],None,"p"))
 
 i=0
+print("TRACE BASED ON EXTERNAL OBSERVATIONS")
 for t in trace:
-  print(i,t.state,t.beliefs)
+  #print(i,t.state,t.beliefs)
   if t.action!=None:
     print(i,t.action)
   i+=1
@@ -31,16 +31,19 @@ for t in trace:
 a1=Participant(trace,"a1")
 a2=Participant(trace,"a2")
 
+
 wa=WhyAction("drive",30,a2,None)
+print("DIALOGUE STARTS: ",str(wa))
 d=Dialogue(wa,a1,a2)
 finished=False
 while not finished:
     lm=d.gather_responses_to_open_moves()
     i=0
     resp={}
+    print("RESPONSE OPTIONS")
     for i in range(len(lm)):
       print(i,str(lm[i]))
-    j=input("response?")
+    j=input("RESPONSE? ")
     d.make_move(lm[int(j)])
     lm=d.gather_responses_to_open_moves()
     if len(lm)==0:
