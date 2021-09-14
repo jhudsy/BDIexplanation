@@ -282,8 +282,8 @@ class AssertBelief(Move):
         the latter, we consider the time interval in which the belief did not hold (according to the utterer). """
         legal_moves = []
         to_move = dialogue.get_other_player(self.player)
-        for i in range(self.start, self.end + 1):
-            legal_moves.append(WhyBelief(self.belief, i, to_move, self))
+        #for i in range(self.start, self.end + 1):
+        legal_moves.append(WhyBelief(self.belief, self.start, to_move, self))
 
         if self.belief not in to_move.trace[self.end].beliefs:
             for i in range(self.end, 0, -1):
@@ -350,7 +350,8 @@ class WhyBelief(Move):
         to_move = dialogue.get_other_player(self.player)
         if to_move.trace[self.time-1].current_plan!=None and AddBelief(self.belief) in to_move.trace[self.time - 1].current_plan.effects:
             legal_moves.append(AssertPlan(to_move.trace[self.time - 1].current_plan, self.time - 1, to_move, self))
-        if AddBelief(self.belief) in to_move.trace[self.time - 1].event_stack[0].effect:  # TODO: Check time
+
+        if to_move.trace[self.time-1].event_stack[0]!=None and AddBelief(self.belief) in to_move.trace[self.time - 1].event_stack[0].effect:  # TODO: Check time
             legal_moves.append(PerceptAddBelief(self.belief, self.time, to_move, self))
         return legal_moves  # NB. what if legal moves are empty?
 
@@ -363,7 +364,7 @@ class WhyNotBelief(Move):
         self.time = time
 
     def __str__(self):
-        return f"{self.player} asks why belief {self.belief} holds at time {self.time}?"
+        return f"{self.player} asks why belief {self.belief} does not hold at time {self.time}?"
 
     def find_legal_moves(self, dialogue):
         """legal responses are assert plan at time t-1 and percept"""

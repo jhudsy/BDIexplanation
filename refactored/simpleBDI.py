@@ -80,7 +80,6 @@ def do_execution(last_trace_element):
   
   new_trace_element.event_stack.pop(0) #remove null element as we are not doing perception
 
-  beliefs=new_trace_element.beliefs
   for e in new_trace_element.current_plan.effects:
     e.execute_effect(new_trace_element)
   new_trace_element.state="p"
