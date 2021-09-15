@@ -82,6 +82,7 @@ def do_execution(last_trace_element):
 
   for e in new_trace_element.current_plan.effects:
     e.execute_effect(new_trace_element)
+  new_trace_element.current_plan=None
   new_trace_element.state="p"
   return new_trace_element
 
